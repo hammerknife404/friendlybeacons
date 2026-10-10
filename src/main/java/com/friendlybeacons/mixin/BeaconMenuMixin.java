@@ -1,8 +1,10 @@
 package com.friendlybeacons.mixin;
 
+import com.friendlybeacons.BeaconSettings;
 import com.friendlybeacons.BeaconTargets;
 import com.friendlybeacons.BeaconTargetsHolder;
 import com.friendlybeacons.FriendlyBeacons;
+import com.friendlybeacons.SyncedBeaconSlot;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -21,9 +23,9 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * Syncs the beacon's target mask to the client through an extra data slot, and accepts
- * toggles from the client through the vanilla container button click packet
- * (button id = {@link BeaconTargets} ordinal).
+ * Syncs the beacon's friendlybeacons settings to the client through extra data slots, and
+ * accepts changes from the client through the vanilla container button click packet
+ * (see {@link BeaconSettings} for button ids).
  */
 @Mixin(BeaconMenu.class)
 public abstract class BeaconMenuMixin extends AbstractContainerMenu implements BeaconTargetsHolder {
@@ -33,6 +35,10 @@ public abstract class BeaconMenuMixin extends AbstractContainerMenu implements B
 
     @Unique
     private DataSlot friendlybeacons$targets;
+    @Unique
+    private DataSlot friendlybeacons$radius;
+    @Unique
+    private DataSlot friendlybeacons$bonus;
 
     protected BeaconMenuMixin(MenuType<?> type, int containerId) {
         super(type, containerId);
@@ -40,33 +46,35 @@ public abstract class BeaconMenuMixin extends AbstractContainerMenu implements B
 
     @Inject(method = "<init>(ILnet/minecraft/world/Container;Lnet/minecraft/world/inventory/ContainerData;Lnet/minecraft/world/inventory/ContainerLevelAccess;)V",
             at = @At("TAIL"))
-    private void friendlybeacons$addTargetsSlot(int containerId, Container container, ContainerData data,
+    private void friendlybeacons$addSlots(int containerId, Container container, ContainerData data,
             ContainerLevelAccess access, CallbackInfo ci) {
-        // Server: reads the block entity live. Client: access is NULL, so it holds the synced value.
-        friendlybeacons$targets = addDataSlot(new DataSlot() {
-            private int clientValue = BeaconTargets.DEFAULT;
-
-            @Override
-            public int get() {
-                return access.evaluate((level, pos) -> level.getBlockEntity(pos) instanceof BeaconBlockEntity beacon
-                        ? beacon.getData(FriendlyBeacons.BEACON_TARGETS)
-                        : clientValue, clientValue);
-            }
-
-            @Override
-            public void set(int value) {
-                clientValue = value;
-            }
-        });
+        friendlybeacons$targets = addDataSlot(new SyncedBeaconSlot(access,
+                beacon -> beacon.getData(FriendlyBeacons.BEACON_TARGETS), BeaconTargets.DEFAULT));
+        friendlybeacons$radius = addDataSlot(new SyncedBeaconSlot(access,
+                beacon -> BeaconSettings.radiusBlocks(((BeaconBlockEntityAccessor) beacon).friendlybeacons$getLevels(),
+                        beacon.getData(FriendlyBeacons.BEACON_RADIUS)), 0));
+        friendlybeacons$bonus = addDataSlot(new SyncedBeaconSlot(access,
+                beacon -> beacon.getData(FriendlyBeacons.BEACON_BONUS), BeaconSettings.BONUS_BOTH_II));
     }
 
     @Override
     public boolean clickMenuButton(Player player, int id) {
-        if (id < 0 || id >= BeaconTargets.values().length) return false;
-        int bit = BeaconTargets.values()[id].bit();
+        BeaconMenu self = (BeaconMenu) (Object) this;
         return access.evaluate((level, pos) -> {
             if (!(level.getBlockEntity(pos) instanceof BeaconBlockEntity beacon)) return false;
-            beacon.setData(FriendlyBeacons.BEACON_TARGETS, beacon.getData(FriendlyBeacons.BEACON_TARGETS) ^ bit);
+            int levels = ((BeaconBlockEntityAccessor) beacon).friendlybeacons$getLevels();
+            if (id >= 0 && id < BeaconTargets.values().length) {
+                int bit = BeaconTargets.values()[id].bit();
+                beacon.setData(FriendlyBeacons.BEACON_TARGETS, beacon.getData(FriendlyBeacons.BEACON_TARGETS) ^ bit);
+            } else if (id == BeaconSettings.BUTTON_RADIUS && levels > 0) {
+                beacon.setData(FriendlyBeacons.BEACON_RADIUS,
+                        BeaconSettings.nextRadiusSelection(levels, beacon.getData(FriendlyBeacons.BEACON_RADIUS)));
+            } else if (BeaconSettings.isValidBonus(id - BeaconSettings.BUTTON_SET_BONUS) && levels >= 5 && self.hasPayment()) {
+                // Like vanilla powers this needs a payment item; the Done packet that follows consumes it.
+                beacon.setData(FriendlyBeacons.BEACON_BONUS, id - BeaconSettings.BUTTON_SET_BONUS);
+            } else {
+                return false;
+            }
             beacon.setChanged();
             return true;
         }, false);
@@ -80,5 +88,15 @@ public abstract class BeaconMenuMixin extends AbstractContainerMenu implements B
     @Override
     public void friendlybeacons$setTargets(int mask) {
         friendlybeacons$targets.set(mask);
+    }
+
+    @Override
+    public int friendlybeacons$getRadius() {
+        return friendlybeacons$radius.get();
+    }
+
+    @Override
+    public int friendlybeacons$getBonus() {
+        return friendlybeacons$bonus.get();
     }
 }

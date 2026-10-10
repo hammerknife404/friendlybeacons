@@ -7,5 +7,14 @@
   "friendlybeacons.targets.hostile": "Hostile",
   "friendlybeacons.targets.hostile.desc": "Monsters and every other hostile mob.",
   "friendlybeacons.targets.player": "Player",
-  "friendlybeacons.targets.player.desc": "Players (the vanilla behavior)."
+  "friendlybeacons.targets.player.desc": "Players (the vanilla behavior).",
+  "friendlybeacons.radius": "Radius: %s",
+  "friendlybeacons.radius.none": "Radius: -",
+  "friendlybeacons.radius.desc": "Click to cycle the effect radius. Bigger pyramids unlock larger radii.",
+  "friendlybeacons.bonus.title": "Tier 5 bonus",
+  "friendlybeacons.bonus.both_ii": "Both powers at level II",
+  "friendlybeacons.bonus.both_ii.desc": "Tier 5 bonus: primary and secondary powers both at level II.",
+  "friendlybeacons.bonus.extra.desc": "Tier 5 bonus: adds this as a third power at level I.",
+  "friendlybeacons.bonus.extra.cycle": "Tier 5 bonus: third power at level I. Click again for another effect.",
+  "friendlybeacons.bonus.locked": "Requires a 5th pyramid layer (11x11)."
 }

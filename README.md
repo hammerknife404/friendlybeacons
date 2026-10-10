@@ -1,14 +1,17 @@
 # Friendly Beacons
 
-A NeoForge mod for Minecraft 1.21.1 that lets beacon effects apply to mobs, not just players.
+A NeoForge mod for Minecraft 1.21.1 that lets beacon effects apply to mobs, not just players, with a bigger and adjustable radius and a hidden 5th pyramid tier.
 
 ## Features
 
 - Adds an **Affects** panel to the left of the beacon screen with four checkboxes: Passive, Friendly, Hostile and Player.
 - Player is selected by default, so beacons behave exactly like vanilla until you change them.
 - Changes apply right away. No payment item or Done click is needed, and the beacon's powers are left alone.
-- Each beacon saves its own setting. A broken and re-placed beacon goes back to Player only.
-- Range, duration and amplifier match vanilla.
+- A **Radius** button cycles through the radius of each tier your pyramid has reached, so you can keep a beacon off a mob farm next door.
+- Larger default reach: 28 / 40 / 52 / 64 blocks for tiers 1–4 (vanilla is 20 / 30 / 40 / 50).
+- A **tier 5**: add an 11×11 fifth layer under the pyramid to unlock a 76-block radius and a bonus (see below).
+- Each beacon saves its own settings. A broken and re-placed beacon goes back to Player only and the largest radius.
+- Effect duration and the tier 1–4 power rules match vanilla.
 
 ## Categories
 
@@ -21,6 +24,26 @@ A NeoForge mod for Minecraft 1.21.1 that lets beacon effects apply to mobs, not 
 
 Armor stands are never affected.
 
+## Tier 5
+
+A fifth pyramid layer (11×11, 285 blocks in total) unlocks a 76-block radius step and a bonus.
+
+The beacon screen shows a tier 5 row under the Secondary Power column, with a 5-layer pyramid icon and two buttons. It stays greyed out until the fifth layer is built.
+
+- **II**: the primary and secondary powers both at level II (e.g. Haste II + Regeneration II).
+- **Third power**: a third power at level I. Click it again while it's selected to step to the next effect. It skips effects your powers already cover.
+
+Like vanilla powers, the pick only applies when you press Done with a payment item.
+
+## Configuration
+
+`serverconfig/friendlybeacons-server.toml` in the world folder, created on first launch:
+
+| Option        | Default                | Description                                                  |
+|---------------|------------------------|--------------------------------------------------------------|
+| `tierRadius`  | `[28, 40, 52, 64, 76]` | Maximum radius in blocks for tiers 1–5. Vanilla is `[20, 30, 40, 50]`. |
+| `enableTier5` | `true`                 | Allow the 5th pyramid layer.                                 |
+
 ## Requirements
 
 - Minecraft 1.21.1
@@ -32,10 +55,11 @@ Put `friendlybeacons-<version>.jar` in the `mods/` folder. Install it on both th
 
 ## How it works
 
-- The setting is stored as a NeoForge data attachment on the beacon block entity.
-- It syncs to the client through an extra data slot on the beacon menu.
-- Clicking a checkbox sends Minecraft's built-in container button click packet, so the mod adds no custom networking.
-- When only Player is selected, the vanilla effect code runs unchanged. Otherwise a copy of it runs that targets every selected category.
+- The settings are stored as NeoForge data attachments on the beacon block entity.
+- They sync to the client through extra data slots on the beacon menu.
+- Clicking a checkbox, the Radius button or Done (for the tier 5 bonus) sends Minecraft's built-in container button click packet, so the mod adds no custom networking.
+- The vanilla effect code is replaced with a copy that handles the target categories, the radius and the tier 5 bonus.
+- Tier 5 works by letting the vanilla pyramid check look at a fifth layer. Vanilla code already handles a level above 4.
 
 ## Building
 
