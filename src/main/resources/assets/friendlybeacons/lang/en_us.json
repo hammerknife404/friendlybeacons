@@ -1,0 +1,11 @@
+{
+  "friendlybeacons.targets.title": "Affects",
+  "friendlybeacons.targets.passive": "Passive",
+  "friendlybeacons.targets.passive.desc": "Animals, villagers, fish and other non-hostile mobs.",
+  "friendlybeacons.targets.friendly": "Friendly",
+  "friendlybeacons.targets.friendly.desc": "Tamed pets and mounts, iron and snow golems, and allays.",
+  "friendlybeacons.targets.hostile": "Hostile",
+  "friendlybeacons.targets.hostile.desc": "Monsters and every other hostile mob.",
+  "friendlybeacons.targets.player": "Player",
+  "friendlybeacons.targets.player.desc": "Players (the vanilla behavior)."
+}
