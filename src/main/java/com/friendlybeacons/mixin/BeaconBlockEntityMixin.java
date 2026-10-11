@@ -4,9 +4,7 @@ import com.friendlybeacons.BeaconSettings;
 import com.friendlybeacons.BeaconTargets;
 import com.friendlybeacons.FriendlyBeacons;
 import com.friendlybeacons.FriendlyBeaconsConfig;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.world.effect.MobEffect;
@@ -44,32 +42,15 @@ public abstract class BeaconBlockEntityMixin {
         int mask = beacon.getData(FriendlyBeacons.BEACON_TARGETS);
         if (mask == 0) return;
 
-        boolean tier5 = beaconLevel >= 5;
-        int bonus = beacon.getData(FriendlyBeacons.BEACON_BONUS);
-        boolean bothII = tier5 && bonus == BeaconSettings.BONUS_BOTH_II;
-
-        List<Holder<MobEffect>> effects = new ArrayList<>();
-        List<Integer> amplifiers = new ArrayList<>();
-        effects.add(primary);
-        amplifiers.add((beaconLevel >= 4 && Objects.equals(primary, secondary)) || bothII ? 1 : 0);
-        if (beaconLevel >= 4 && secondary != null && !Objects.equals(primary, secondary)) {
-            effects.add(secondary);
-            amplifiers.add(bothII ? 1 : 0);
-        }
-        if (tier5 && !BeaconSettings.isRedundant(bonus, primary, secondary)) {
-            Holder<MobEffect> extra = BeaconSettings.bonusEffect(bonus);
-            if (extra != null) {
-                effects.add(extra);
-                amplifiers.add(0);
-            }
-        }
+        List<BeaconSettings.Power> powers = BeaconSettings.powers(beaconLevel, primary, secondary,
+                beacon.getData(FriendlyBeacons.BEACON_BONUS));
 
         double range = BeaconSettings.radiusBlocks(beaconLevel, beacon.getData(FriendlyBeacons.BEACON_RADIUS));
         int duration = (9 + beaconLevel * 2) * 20;
         AABB area = new AABB(pos).inflate(range).expandTowards(0.0, level.getHeight(), 0.0);
         for (LivingEntity entity : level.getEntitiesOfClass(LivingEntity.class, area, e -> BeaconTargets.matches(e, mask))) {
-            for (int i = 0; i < effects.size(); i++) {
-                entity.addEffect(new MobEffectInstance(effects.get(i), duration, amplifiers.get(i), true, true));
+            for (BeaconSettings.Power power : powers) {
+                entity.addEffect(new MobEffectInstance(power.effect(), duration, power.amplifier(), true, true));
             }
         }
     }

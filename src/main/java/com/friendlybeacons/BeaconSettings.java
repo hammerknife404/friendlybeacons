@@ -1,5 +1,6 @@
 package com.friendlybeacons;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import net.minecraft.core.Holder;
@@ -65,5 +66,27 @@ public final class BeaconSettings {
 
     public static boolean isValidBonus(int bonus) {
         return bonus == BONUS_BOTH_II || bonusEffect(bonus) != null;
+    }
+
+    public record Power(Holder<MobEffect> effect, int amplifier) {}
+
+    /**
+     * Effects a beacon gives with these levels, powers and tier 5 bonus. Tier 1-4 rules match
+     * vanilla. Used by the server to apply effects and by the client to preview them.
+     */
+    public static List<Power> powers(int levels, @Nullable Holder<MobEffect> primary, @Nullable Holder<MobEffect> secondary, int bonus) {
+        List<Power> powers = new ArrayList<>();
+        if (levels <= 0 || primary == null) return powers;
+        boolean tier5 = levels >= 5;
+        boolean bothII = tier5 && bonus == BONUS_BOTH_II;
+        powers.add(new Power(primary, (levels >= 4 && primary.equals(secondary)) || bothII ? 1 : 0));
+        if (levels >= 4 && secondary != null && !primary.equals(secondary)) {
+            powers.add(new Power(secondary, bothII ? 1 : 0));
+        }
+        if (tier5 && !isRedundant(bonus, primary, secondary)) {
+            Holder<MobEffect> extra = bonusEffect(bonus);
+            if (extra != null) powers.add(new Power(extra, 0));
+        }
+        return powers;
     }
 }

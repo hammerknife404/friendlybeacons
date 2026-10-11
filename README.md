@@ -7,6 +7,7 @@ A NeoForge mod for Minecraft 1.21.1 that lets beacon effects apply to mobs, not 
 - Adds an **Affects** panel to the left of the beacon screen with four checkboxes: Passive, Friendly, Hostile and Player.
 - Player is selected by default, so beacons behave exactly like vanilla until you change them.
 - Changes apply right away. No payment item or Done click is needed, and the beacon's powers are left alone.
+- A **Powers** panel to the right of the beacon screen lists the effects the beacon will give, with their levels. It updates as you pick powers. Hover a power button to preview the result: effects the beacon doesn't give yet show in green, and ones it would stop giving are struck through.
 - A **Radius** button cycles through the radius of each tier your pyramid has reached, so you can keep a beacon off a mob farm next door.
 - Larger default reach: 28 / 40 / 52 / 64 blocks for tiers 1–4 (vanilla is 20 / 30 / 40 / 50).
 - A **tier 5**: add an 11×11 fifth layer under the pyramid to unlock a 76-block radius and a bonus (see below).
@@ -30,8 +31,8 @@ A fifth pyramid layer (11×11, 285 blocks in total) unlocks a 76-block radius st
 
 The beacon screen shows a tier 5 row under the Secondary Power column, with a 5-layer pyramid icon and two buttons. It stays greyed out until the fifth layer is built.
 
-- **II**: the primary and secondary powers both at level II (e.g. Haste II + Regeneration II).
-- **Third power**: a third power at level I. Click it again while it's selected to step to the next effect. It skips effects your powers already cover.
+- **II**: the primary and secondary powers both at level II (e.g. Haste II + Regeneration II). The button shows both power icons.
+- **Third power** (marked with a green **+**): a third power at level I. Click it again while it's selected to step to the next effect. It skips effects your powers already cover.
 
 Like vanilla powers, the pick only applies when you press Done with a payment item.
 

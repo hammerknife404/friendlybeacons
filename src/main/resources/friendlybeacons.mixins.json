@@ -13,6 +13,7 @@
   },
   "client": [
     "client.BeaconConfirmButtonMixin",
+    "client.BeaconPowerButtonAccessor",
     "client.BeaconScreenAccessor"
   ]
 }

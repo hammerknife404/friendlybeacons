@@ -26,8 +26,8 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Tier 5 row in the Secondary Power column of the beacon screen: a 5-layer pyramid icon,
- * a "II" button (both powers at level II) and a third-power button that steps to the next
- * effect when clicked while selected. Greyed out until the 5th layer exists. Like vanilla
+ * a "II" button (both powers at level II, drawn with both power icons) and a "+" third-power
+ * button that steps to the next effect when clicked while selected. Greyed out until the 5th layer exists. Like vanilla
  * powers, the pick only applies when Done is pressed with a payment item.
  */
 public class Tier5Row extends AbstractWidget {
@@ -44,6 +44,8 @@ public class Tier5Row extends AbstractWidget {
     private static final int BUTTON_SIZE = 22;
     private static final int II_X = ICON_WIDTH + 6;
     private static final int THIRD_X = II_X + BUTTON_SIZE + 2;
+    private static final int ICON = 18;
+    private static final int SMALL_ICON = 12;
     private static final int TOOLTIP_WIDTH = 170;
 
     private static WeakReference<Tier5Row> current = new WeakReference<>(null);
@@ -106,7 +108,8 @@ public class Tier5Row extends AbstractWidget {
         return thirdEffect;
     }
 
-    private int selectedBonus() {
+    /** Bonus that Done would apply. */
+    int selectedBonus() {
         return thirdSelected() ? thirdEffect() : BeaconSettings.BONUS_BOTH_II;
     }
 
@@ -116,6 +119,17 @@ public class Tier5Row extends AbstractWidget {
 
     private boolean thirdAvailable() {
         return unlocked() && !BeaconSettings.isRedundant(thirdEffect(), primary(), secondary());
+    }
+
+    /** Bonus a click at the mouse position would pick, or null if it wouldn't pick one. */
+    @Nullable
+    Integer bonusAt(double mouseX, double mouseY) {
+        if (!visible || !unlocked()) return null;
+        if (isOver(II_X, mouseX, mouseY) && iiAvailable()) return BeaconSettings.BONUS_BOTH_II;
+        if (isOver(THIRD_X, mouseX, mouseY) && thirdAvailable()) {
+            return thirdSelected() ? BeaconSettings.nextEffectBonus(thirdEffect(), primary(), secondary()) : thirdEffect();
+        }
+        return null;
     }
 
     private boolean isOver(int buttonX, double mouseX, double mouseY) {
@@ -133,11 +147,12 @@ public class Tier5Row extends AbstractWidget {
 
         boolean overII = isHovered() && isOver(II_X, mouseX, mouseY);
         boolean overThird = isHovered() && isOver(THIRD_X, mouseX, mouseY);
-        Holder<MobEffect> iiIcon = secondary() != null ? secondary() : primary();
-        renderButton(graphics, II_X, iiAvailable(), !thirdSelected(), overII, iiIcon);
-        graphics.drawString(font, "II", getX() + II_X + BUTTON_SIZE - 3 - font.width("II"), getY() + BUTTON_SIZE - 10, 0xFFFFFF, true);
+        boolean iiAvailable = iiAvailable(), thirdAvailable = thirdAvailable();
+        renderButton(graphics, II_X, iiAvailable, !thirdSelected(), overII);
+        renderIIIcon(graphics, font, getX() + II_X, getY());
         int third = thirdEffect();
-        renderButton(graphics, THIRD_X, thirdAvailable(), thirdSelected(), overThird, BeaconSettings.bonusEffect(third));
+        renderButton(graphics, THIRD_X, thirdAvailable, thirdSelected(), overThird);
+        renderThirdIcon(graphics, font, getX() + THIRD_X, getY(), BeaconSettings.bonusEffect(third), thirdAvailable && thirdSelected());
 
         List<FormattedCharSequence> tooltip = null;
         if (overII) {
@@ -168,14 +183,32 @@ public class Tier5Row extends AbstractWidget {
         return lines;
     }
 
-    private void renderButton(GuiGraphics graphics, int buttonX, boolean active, boolean selected, boolean hovered,
-            @Nullable Holder<MobEffect> icon) {
-        int x = getX() + buttonX, y = getY();
+    private void renderButton(GuiGraphics graphics, int buttonX, boolean active, boolean selected, boolean hovered) {
         ResourceLocation sprite = !active ? BUTTON_DISABLED : selected ? BUTTON_SELECTED : hovered ? BUTTON_HIGHLIGHTED : BUTTON;
-        graphics.blitSprite(sprite, x, y, BUTTON_SIZE, BUTTON_SIZE);
-        if (icon != null) {
-            graphics.blit(x + 2, y + 2, 0, 18, 18, Minecraft.getInstance().getMobEffectTextures().get(icon));
+        graphics.blitSprite(sprite, getX() + buttonX, getY(), BUTTON_SIZE, BUTTON_SIZE);
+    }
+
+    private static void renderIcon(GuiGraphics graphics, int x, int y, int size, @Nullable Holder<MobEffect> effect) {
+        if (effect != null) graphics.blit(x, y, 0, size, size, Minecraft.getInstance().getMobEffectTextures().get(effect));
+    }
+
+    /** Both powers as overlapping small icons with "II", so the button reads as "both at II". */
+    private void renderIIIcon(GuiGraphics graphics, Font font, int x, int y) {
+        Holder<MobEffect> primary = primary(), secondary = secondary();
+        if (secondary != null && !secondary.equals(primary)) {
+            renderIcon(graphics, x + 2, y + 2, SMALL_ICON, primary);
+            renderIcon(graphics, x + BUTTON_SIZE - 2 - SMALL_ICON, y + BUTTON_SIZE - 2 - SMALL_ICON, SMALL_ICON, secondary);
+        } else {
+            renderIcon(graphics, x + 2, y + 2, ICON, primary);
         }
+        graphics.drawString(font, "II", x + BUTTON_SIZE - 3 - font.width("II"), y + BUTTON_SIZE - 10, 0xFFFFFF, true);
+    }
+
+    /** The extra effect with a green "+", and a "»" while selected to hint that clicking again steps on. */
+    private static void renderThirdIcon(GuiGraphics graphics, Font font, int x, int y, @Nullable Holder<MobEffect> effect, boolean cycles) {
+        renderIcon(graphics, x + 2, y + 2, ICON, effect);
+        graphics.drawString(font, "+", x + 2, y + 2, 0x55FF55, true);
+        if (cycles) graphics.drawString(font, "\u00BB", x + BUTTON_SIZE - 2 - font.width("\u00BB"), y + BUTTON_SIZE - 10, 0xFFFFFF, true);
     }
 
     @Override
