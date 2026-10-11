@@ -26,7 +26,12 @@ sourceSets.main.resources {
 }
 
 repositories {
-    // Add here additional repositories if required by some of the dependencies below.
+    // JEI, for the optional integration that keeps its overlays clear of the side panel.
+    maven {
+        name = "Jared's maven"
+        url = "https://maven.blamejared.com/"
+        content { includeGroup "mezz.jei" }
+    }
 }
 
 base {
@@ -115,6 +120,10 @@ configurations {
 }
 
 dependencies {
+    compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
+    compileOnly "mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}"
+    localRuntime "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}"
+
     // Example optional mod dependency with JEI
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
     // compileOnly "mezz.jei:jei-${mc_version}-common-api:${jei_version}"

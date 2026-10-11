@@ -10,14 +10,17 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarratedElementType;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.gui.screens.inventory.BeaconScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.inventory.BeaconMenu;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * Side panel next to the beacon screen: one checkbox per {@link BeaconTargets} category
- * and a radius cycle button.
+ * Side panel next to the beacon screen: one checkbox per {@link BeaconTargets} category,
+ * a radius cycle button and a preview of the beacon's powers. Kept to one panel on the left so
+ * item list overlays such as JEI's on the right don't cover it.
  */
 public class BeaconTargetsPanel extends AbstractWidget {
     private static final ResourceLocation CHECKBOX = ResourceLocation.withDefaultNamespace("widget/checkbox");
@@ -37,17 +40,21 @@ public class BeaconTargetsPanel extends AbstractWidget {
     private static final int TEXT_COLOR = 0x404040;
     private static final int TOOLTIP_WIDTH = 170;
 
-    public static final int WIDTH = 100;
+    /** Fits "Regeneration II" next to its icon. */
+    public static final int WIDTH = 112;
     private static final int ROWS_BOTTOM = PADDING + TITLE_HEIGHT + BeaconTargets.values().length * ROW_HEIGHT - 2;
     private static final int RADIUS_TOP = ROWS_BOTTOM + GAP;
+    private static final int POWERS_TOP = RADIUS_TOP + BUTTON_HEIGHT + 2 * GAP;
 
     private final BeaconMenu menu;
     private final BeaconTargetsHolder settings;
+    private final PowersPreview powers;
 
-    public BeaconTargetsPanel(int x, int y, BeaconMenu menu) {
-        super(x, y, WIDTH, RADIUS_TOP + BUTTON_HEIGHT + PADDING, Component.translatable("friendlybeacons.targets.title"));
-        this.menu = menu;
+    public BeaconTargetsPanel(int x, int y, BeaconScreen screen, @Nullable Tier5Row tier5) {
+        super(x, y, WIDTH, POWERS_TOP + PADDING, Component.translatable("friendlybeacons.targets.title"));
+        this.menu = screen.getMenu();
         this.settings = (BeaconTargetsHolder) menu;
+        this.powers = new PowersPreview(screen, tier5);
     }
 
     private int rowY(int row) {
@@ -71,6 +78,7 @@ public class BeaconTargetsPanel extends AbstractWidget {
     @Override
     protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         Font font = Minecraft.getInstance().font;
+        height = POWERS_TOP + powers.update(mouseX, mouseY, width - 2 * PADDING) + PADDING;
         int x = getX(), y = getY(), right = x + width, bottom = y + height;
 
         // Vanilla container-style bevelled panel.
@@ -97,6 +105,12 @@ public class BeaconTargetsPanel extends AbstractWidget {
 
         boolean radiusHovered = isHovered() && isOverRadiusButton(mouseX, mouseY);
         renderRadiusButton(graphics, font, radiusHovered);
+
+        // Divider above the Powers section, in the panel's bevel colors.
+        int dividerY = y + POWERS_TOP - GAP - 1;
+        graphics.fill(x + PADDING, dividerY - 1, right - PADDING, dividerY, 0xFF555555);
+        graphics.fill(x + PADDING, dividerY, right - PADDING, dividerY + 1, 0xFFFFFFFF);
+        powers.render(graphics, x + PADDING, y + POWERS_TOP, width - 2 * PADDING);
 
         List<FormattedCharSequence> tooltip = null;
         if (hoveredRow >= 0) {
