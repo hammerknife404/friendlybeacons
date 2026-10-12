@@ -7,6 +7,7 @@ import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.neoforge.attachment.AttachmentType;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 
@@ -33,5 +34,10 @@ public class FriendlyBeacons {
     public FriendlyBeacons(IEventBus modBus, ModContainer container) {
         ATTACHMENTS.register(modBus);
         container.registerConfig(ModConfig.Type.SERVER, FriendlyBeaconsConfig.SPEC);
+        modBus.addListener(FriendlyBeacons::registerPayloads);
+    }
+
+    private static void registerPayloads(RegisterPayloadHandlersEvent event) {
+        event.registrar("1").playToClient(HandshakePayload.TYPE, HandshakePayload.STREAM_CODEC, (payload, context) -> {});
     }
 }

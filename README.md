@@ -56,13 +56,14 @@ With [JEI](https://www.curseforge.com/minecraft/mc-mods/jei) installed, its item
 
 ## Installation
 
-Put `friendlybeacons-<version>.jar` in the `mods/` folder. Install it on both the client and the server: the server applies the effects and the client shows the checkboxes.
+Put `friendlybeacons-<version>.jar` in the `mods/` folder. Install it on both the client and the server: the server applies the effects and the client shows the checkboxes. A client without the mod can't join a server that has it.
 
 ## How it works
 
 - The settings are stored as NeoForge data attachments on the beacon block entity.
 - They sync to the client through extra data slots on the beacon menu.
-- Clicking a checkbox, the Radius button or Done (for the tier 5 bonus) sends Minecraft's built-in container button click packet, so the mod adds no custom networking.
+- Clicking a checkbox, the Radius button or Done (for the tier 5 bonus) sends Minecraft's built-in container button click packet, so the mod adds no custom packets.
+- The mod registers one required network channel that is never used. It makes NeoForge turn away clients without the mod at login, instead of letting them crash when they open a beacon.
 - The vanilla effect code is replaced with a copy that handles the target categories, the radius and the tier 5 bonus.
 - Tier 5 works by letting the vanilla pyramid check look at a fifth layer. Vanilla code already handles a level above 4.
 

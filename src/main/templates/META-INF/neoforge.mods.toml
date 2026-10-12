@@ -1,14 +1,18 @@
 modLoader="javafml"
 loaderVersion="${loader_version_range}"
 license="${mod_license}"
+issueTrackerURL="https://github.com/hammerknife404/friendlybeacons/issues"
 
 [[mods]]
 modId="${mod_id}"
 version="${mod_version}"
 displayName="${mod_name}"
+authors="hammerknife404"
+displayURL="https://github.com/hammerknife404/friendlybeacons"
 description='''
 Lets beacon effects apply to passive, friendly and hostile mobs, not just players.
-Pick the targets with the checkboxes next to the beacon screen.
+Pick the targets and the radius in the panel next to the beacon screen.
+Beacons reach further, and a fifth pyramid layer unlocks a bigger radius and a bonus power.
 '''
 
 [[mixins]]
@@ -27,3 +31,10 @@ config="${mod_id}.mixins.json"
     versionRange="${minecraft_version_range}"
     ordering="NONE"
     side="BOTH"
+
+[[dependencies.${mod_id}]]
+    modId="jei"
+    type="optional"
+    versionRange="[19,)"
+    ordering="NONE"
+    side="CLIENT"
