@@ -32,7 +32,7 @@ A fifth pyramid layer (11×11, 285 blocks in total) unlocks a 76-block radius st
 The beacon screen shows a tier 5 row under the Secondary Power column, with a 5-layer pyramid icon and two buttons. It stays greyed out until the fifth layer is built.
 
 - **II**: the primary and secondary powers both at level II (e.g. Haste II + Regeneration II). The button shows both power icons.
-- **Third power** (marked with a green **+**): a third power at level I. Click it again while it's selected to step to the next effect. It skips effects your powers already cover.
+- **Third power** (marked with a green **+**): a third power at level I, chosen from the vanilla beacon effects plus Glowing. Click it again while it's selected to step to the next effect. It skips effects your powers already cover.
 
 Like vanilla powers, the pick only applies when you press Done with a payment item.
 

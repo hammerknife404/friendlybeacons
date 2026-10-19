@@ -3,8 +3,10 @@ package com.friendlybeacons;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Stream;
 import net.minecraft.core.Holder;
 import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.level.block.entity.BeaconBlockEntity;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,9 +39,11 @@ public final class BeaconSettings {
     }
 
     // Tier 5 bonus: BONUS_BOTH_II, or 1..n for a third power from BONUS_EFFECTS.
+    // Saved beacons store the index, so new effects go at the end.
     public static final int BONUS_BOTH_II = 0;
-    public static final List<Holder<MobEffect>> BONUS_EFFECTS =
-            BeaconBlockEntity.BEACON_EFFECTS.stream().flatMap(List::stream).toList();
+    public static final List<Holder<MobEffect>> BONUS_EFFECTS = Stream.concat(
+            BeaconBlockEntity.BEACON_EFFECTS.stream().flatMap(List::stream),
+            Stream.of(MobEffects.GLOWING)).toList();
 
     @Nullable
     public static Holder<MobEffect> bonusEffect(int bonus) {
