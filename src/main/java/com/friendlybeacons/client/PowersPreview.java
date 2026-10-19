@@ -56,14 +56,16 @@ class PowersPreview {
     int update(int mouseX, int mouseY, int width) {
         Font font = Minecraft.getInstance().font;
         int levels = menu.getLevels();
+        boolean glow = settings.friendlybeacons$getGlow();
+        int disabled = settings.friendlybeacons$getDisabledEffects();
         List<BeaconSettings.Power> applied = BeaconSettings.powers(levels, menu.getPrimaryEffect(), menu.getSecondaryEffect(),
-                settings.friendlybeacons$getBonus());
+                settings.friendlybeacons$getBonus(), glow, disabled);
 
         // Picks on the screen, replaced by whatever the hovered button would pick.
         BeaconScreenAccessor picks = (BeaconScreenAccessor) screen;
         Holder<MobEffect> primary = picks.friendlybeacons$getPrimary(), secondary = picks.friendlybeacons$getSecondary();
         int bonus = tier5 != null ? tier5.selectedBonus() : settings.friendlybeacons$getBonus();
-        List<BeaconSettings.Power> pending = BeaconSettings.powers(levels, primary, secondary, bonus);
+        List<BeaconSettings.Power> pending = BeaconSettings.powers(levels, primary, secondary, bonus, glow, disabled);
         for (GuiEventListener child : screen.children()) {
             if (child instanceof BeaconPowerButtonAccessor button && child.isMouseOver(mouseX, mouseY)) {
                 if (button.friendlybeacons$isPrimary()) primary = button.friendlybeacons$getEffect();
@@ -72,7 +74,7 @@ class PowersPreview {
         }
         Integer hoveredBonus = tier5 != null ? tier5.bonusAt(mouseX, mouseY) : null;
         if (hoveredBonus != null) bonus = hoveredBonus;
-        List<BeaconSettings.Power> shown = BeaconSettings.powers(levels, primary, secondary, bonus);
+        List<BeaconSettings.Power> shown = BeaconSettings.powers(levels, primary, secondary, bonus, glow, disabled);
 
         rows.clear();
         for (BeaconSettings.Power power : shown) {
@@ -81,9 +83,10 @@ class PowersPreview {
         for (BeaconSettings.Power power : applied) {
             if (!shown.contains(power)) rows.add(new Row(power, GRAY_COLOR, true));
         }
-        message = rows.isEmpty()
-                ? font.split(Component.translatable(levels > 0 ? "friendlybeacons.powers.none" : "friendlybeacons.powers.no_pyramid"), width)
-                : List.of();
+        String messageKey = levels <= 0 ? "friendlybeacons.powers.no_pyramid"
+                : primary == null ? "friendlybeacons.powers.none"
+                : "friendlybeacons.powers.disabled";
+        message = rows.isEmpty() ? font.split(Component.translatable(messageKey), width) : List.of();
         footer = pending.equals(applied) ? List.of()
                 : font.split(Component.translatable("friendlybeacons.powers.pending").withStyle(ChatFormatting.ITALIC), width);
         return TITLE_HEIGHT + rows.size() * ROW_HEIGHT + (message.size() + footer.size()) * font.lineHeight;

@@ -20,5 +20,22 @@
   "friendlybeacons.bonus.both_ii.desc": "Tier 5 bonus: primary and secondary powers both at level II.",
   "friendlybeacons.bonus.extra.desc": "Tier 5 bonus: adds this as a third power at level I.",
   "friendlybeacons.bonus.extra.cycle": "Tier 5 bonus: third power at level I. Click again for another effect.",
-  "friendlybeacons.bonus.locked": "Requires a 5th pyramid layer (11x11)."
+  "friendlybeacons.bonus.locked": "Requires a 5th pyramid layer (11x11).",
+  "friendlybeacons.powers.disabled": "The server has turned these powers off.",
+  "friendlybeacons.glow": "Glowing",
+  "friendlybeacons.glow.desc": "Tier 5: everything this beacon affects glows, visible through walls. Free to switch, no payment item needed.",
+  "friendlybeacons.glow.locked": "Tier 5: everything this beacon affects glows. Requires a 5th pyramid layer (11x11).",
+  "friendlybeacons.glow.disabled": "Glowing is turned off on this server.",
+  "friendlybeacons.command.list": "Beacon effects:",
+  "friendlybeacons.command.enabled": "enabled",
+  "friendlybeacons.command.disabled": "disabled",
+  "friendlybeacons.command.unknown_effect": "Unknown beacon effect: %s",
+  "friendlybeacons.configuration.title": "Friendly Beacons",
+  "friendlybeacons.configuration.tierRadius": "Tier Radius",
+  "friendlybeacons.configuration.tierRadius.tooltip": "Maximum effect radius in blocks for pyramid tiers 1-5.",
+  "friendlybeacons.configuration.enableTier5": "Enable Tier 5",
+  "friendlybeacons.configuration.enableTier5.tooltip": "Allow a 5th pyramid layer (11x11) that unlocks the tier 5 radius, bonus and Glowing.",
+  "friendlybeacons.configuration.effects": "Beacon Effects",
+  "friendlybeacons.configuration.effects.tooltip": "Turn each beacon effect on or off for every beacon.",
+  "friendlybeacons.configuration.effects.button": "Toggle Effects..."
 }

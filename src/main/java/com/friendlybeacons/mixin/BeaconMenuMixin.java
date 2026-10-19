@@ -4,6 +4,7 @@ import com.friendlybeacons.BeaconSettings;
 import com.friendlybeacons.BeaconTargets;
 import com.friendlybeacons.BeaconTargetsHolder;
 import com.friendlybeacons.FriendlyBeacons;
+import com.friendlybeacons.FriendlyBeaconsConfig;
 import com.friendlybeacons.SyncedBeaconSlot;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Player;
@@ -39,6 +40,10 @@ public abstract class BeaconMenuMixin extends AbstractContainerMenu implements B
     private DataSlot friendlybeacons$radius;
     @Unique
     private DataSlot friendlybeacons$bonus;
+    @Unique
+    private DataSlot friendlybeacons$glow;
+    @Unique
+    private DataSlot friendlybeacons$disabledEffects;
 
     protected BeaconMenuMixin(MenuType<?> type, int containerId) {
         super(type, containerId);
@@ -55,6 +60,11 @@ public abstract class BeaconMenuMixin extends AbstractContainerMenu implements B
                         beacon.getData(FriendlyBeacons.BEACON_RADIUS)), 0));
         friendlybeacons$bonus = addDataSlot(new SyncedBeaconSlot(access,
                 beacon -> beacon.getData(FriendlyBeacons.BEACON_BONUS), BeaconSettings.BONUS_BOTH_II));
+        friendlybeacons$glow = addDataSlot(new SyncedBeaconSlot(access,
+                beacon -> beacon.getData(FriendlyBeacons.BEACON_GLOW), 1));
+        // Server-wide, but synced per menu so /friendlybeacons effect changes reach open screens.
+        friendlybeacons$disabledEffects = addDataSlot(new SyncedBeaconSlot(access,
+                beacon -> FriendlyBeaconsConfig.disabledEffects(), 0));
     }
 
     @Override
@@ -69,6 +79,9 @@ public abstract class BeaconMenuMixin extends AbstractContainerMenu implements B
             } else if (id == BeaconSettings.BUTTON_RADIUS && levels > 0) {
                 beacon.setData(FriendlyBeacons.BEACON_RADIUS,
                         BeaconSettings.nextRadiusSelection(levels, beacon.getData(FriendlyBeacons.BEACON_RADIUS)));
+            } else if (id == BeaconSettings.BUTTON_GLOW) {
+                // Free and instant like the target checkboxes, so it can be flipped on for a raid.
+                beacon.setData(FriendlyBeacons.BEACON_GLOW, beacon.getData(FriendlyBeacons.BEACON_GLOW) != 0 ? 0 : 1);
             } else if (BeaconSettings.isValidBonus(id - BeaconSettings.BUTTON_SET_BONUS) && levels >= 5 && self.hasPayment()) {
                 // Like vanilla powers this needs a payment item; the Done packet that follows consumes it.
                 beacon.setData(FriendlyBeacons.BEACON_BONUS, id - BeaconSettings.BUTTON_SET_BONUS);
@@ -98,5 +111,20 @@ public abstract class BeaconMenuMixin extends AbstractContainerMenu implements B
     @Override
     public int friendlybeacons$getBonus() {
         return friendlybeacons$bonus.get();
+    }
+
+    @Override
+    public boolean friendlybeacons$getGlow() {
+        return friendlybeacons$glow.get() != 0;
+    }
+
+    @Override
+    public void friendlybeacons$setGlow(boolean glow) {
+        friendlybeacons$glow.set(glow ? 1 : 0);
+    }
+
+    @Override
+    public int friendlybeacons$getDisabledEffects() {
+        return friendlybeacons$disabledEffects.get();
     }
 }
