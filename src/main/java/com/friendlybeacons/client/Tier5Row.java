@@ -26,9 +26,11 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Tier 5 row in the Secondary Power column of the beacon screen: a 5-layer pyramid icon,
- * a "II" button (both powers at level II, drawn with both power icons) and a "+" third-power
- * button that steps to the next effect when clicked while selected. Greyed out until the 5th layer exists. Like vanilla
- * powers, the pick only applies when Done is pressed with a payment item.
+ * a level button and a "+" third-power button. The level button is "II" (both powers at level II,
+ * drawn with both power icons) or "III" (primary at level III); clicking it while selected switches
+ * between the two. The "+" button steps to the next effect when clicked while selected. Greyed out
+ * until the 5th layer exists. Like vanilla powers, the pick only applies when Done is pressed with
+ * a payment item.
  */
 public class Tier5Row extends AbstractWidget {
     private static final ResourceLocation PYRAMID = ResourceLocation.fromNamespaceAndPath(FriendlyBeacons.MOD_ID, "container/beacon/tier5_pyramid");
@@ -58,6 +60,8 @@ public class Tier5Row extends AbstractWidget {
     private Integer pending;
     private int thirdEffect;
     private boolean thirdPicked;
+    private int levelBonus = BeaconSettings.BONUS_BOTH_II;
+    private boolean levelPicked;
 
     public Tier5Row(BeaconScreen screen) {
         super(screen.getGuiLeft() + SCREEN_X, screen.getGuiTop() + SCREEN_Y, THIRD_X + BUTTON_SIZE, BUTTON_SIZE,
@@ -95,13 +99,29 @@ public class Tier5Row extends AbstractWidget {
     }
 
     private boolean thirdSelected() {
-        return bonus() != BeaconSettings.BONUS_BOTH_II;
+        return !BeaconSettings.isLevelBonus(bonus());
+    }
+
+    /** Bonus shown on the level button: the saved one, else II. III drops back to II when it isn't allowed. */
+    private int levelBonus() {
+        int saved = settings.friendlybeacons$getBonus();
+        if (!levelPicked && BeaconSettings.isLevelBonus(saved)) levelBonus = saved;
+        if (levelBonus == BeaconSettings.BONUS_PRIMARY_III && BeaconSettings.isRedundant(levelBonus, primary(), secondary())) {
+            levelBonus = BeaconSettings.BONUS_BOTH_II;
+        }
+        return levelBonus;
+    }
+
+    /** The other level bonus if it's available, else the current one. */
+    private int nextLevelBonus() {
+        int other = levelBonus() == BeaconSettings.BONUS_BOTH_II ? BeaconSettings.BONUS_PRIMARY_III : BeaconSettings.BONUS_BOTH_II;
+        return BeaconSettings.isRedundant(other, primary(), secondary()) ? levelBonus() : other;
     }
 
     /** Effect shown on the third-power button: the saved one, else the next effect not already covered. */
     private int thirdEffect() {
         int saved = settings.friendlybeacons$getBonus();
-        if (!thirdPicked && saved != BeaconSettings.BONUS_BOTH_II) thirdEffect = saved;
+        if (!thirdPicked && !BeaconSettings.isLevelBonus(saved)) thirdEffect = saved;
         if (thirdEffect < 1 || BeaconSettings.isRedundant(thirdEffect, primary(), secondary())) {
             thirdEffect = BeaconSettings.nextEffectBonus(Math.max(thirdEffect, 0), primary(), secondary());
         }
@@ -110,11 +130,12 @@ public class Tier5Row extends AbstractWidget {
 
     /** Bonus that Done would apply. */
     int selectedBonus() {
-        return thirdSelected() ? thirdEffect() : BeaconSettings.BONUS_BOTH_II;
+        return thirdSelected() ? thirdEffect() : levelBonus();
     }
 
-    private boolean iiAvailable() {
-        return unlocked() && !BeaconSettings.isRedundant(BeaconSettings.BONUS_BOTH_II, primary(), secondary());
+    private boolean levelAvailable() {
+        return unlocked() && (!BeaconSettings.isRedundant(BeaconSettings.BONUS_BOTH_II, primary(), secondary())
+                || !BeaconSettings.isRedundant(BeaconSettings.BONUS_PRIMARY_III, primary(), secondary()));
     }
 
     private boolean thirdAvailable() {
@@ -125,7 +146,7 @@ public class Tier5Row extends AbstractWidget {
     @Nullable
     Integer bonusAt(double mouseX, double mouseY) {
         if (!visible || !unlocked()) return null;
-        if (isOver(II_X, mouseX, mouseY) && iiAvailable()) return BeaconSettings.BONUS_BOTH_II;
+        if (isOver(II_X, mouseX, mouseY) && levelAvailable()) return thirdSelected() ? levelBonus() : nextLevelBonus();
         if (isOver(THIRD_X, mouseX, mouseY) && thirdAvailable()) {
             return thirdSelected() ? BeaconSettings.nextEffectBonus(thirdEffect(), primary(), secondary()) : thirdEffect();
         }
@@ -147,16 +168,25 @@ public class Tier5Row extends AbstractWidget {
 
         boolean overII = isHovered() && isOver(II_X, mouseX, mouseY);
         boolean overThird = isHovered() && isOver(THIRD_X, mouseX, mouseY);
-        boolean iiAvailable = iiAvailable(), thirdAvailable = thirdAvailable();
-        renderButton(graphics, II_X, iiAvailable, !thirdSelected(), overII);
-        renderIIIcon(graphics, font, getX() + II_X, getY());
+        boolean levelAvailable = levelAvailable(), thirdAvailable = thirdAvailable();
+        int level = levelBonus();
+        boolean levelCycles = levelAvailable && !thirdSelected() && nextLevelBonus() != level;
+        renderButton(graphics, II_X, levelAvailable, !thirdSelected(), overII);
+        renderLevelIcon(graphics, font, getX() + II_X, getY(), level == BeaconSettings.BONUS_PRIMARY_III, levelCycles);
         int third = thirdEffect();
         renderButton(graphics, THIRD_X, thirdAvailable, thirdSelected(), overThird);
         renderThirdIcon(graphics, font, getX() + THIRD_X, getY(), BeaconSettings.bonusEffect(third), thirdAvailable && thirdSelected());
 
         List<FormattedCharSequence> tooltip = null;
         if (overII) {
-            tooltip = tooltip(iiTitle(), "friendlybeacons.bonus.both_ii.desc", unlocked);
+            boolean iii = level == BeaconSettings.BONUS_PRIMARY_III;
+            String desc = iii ? "friendlybeacons.bonus.primary_iii" : "friendlybeacons.bonus.both_ii";
+            tooltip = tooltip(iii ? iiiTitle() : iiTitle(), desc + (levelCycles ? ".cycle" : ".desc"), unlocked);
+            Holder<MobEffect> primary = primary();
+            if (unlocked && primary != null && BeaconSettings.isResistanceIIIBlocked(primary)) {
+                tooltip.addAll(Minecraft.getInstance().font.split(Component.translatable("friendlybeacons.bonus.primary_iii.resistance_disabled")
+                        .withStyle(ChatFormatting.DARK_GRAY), TOOLTIP_WIDTH));
+            }
         } else if (overThird) {
             Holder<MobEffect> effect = BeaconSettings.bonusEffect(third);
             MutableComponent title = effect != null ? Component.translatable(effect.value().getDescriptionId()) : Component.empty();
@@ -171,6 +201,16 @@ public class Tier5Row extends AbstractWidget {
         MutableComponent title = Component.translatable(primary.value().getDescriptionId()).append(" II");
         if (secondary != null && !secondary.equals(primary)) {
             title.append(" + ").append(Component.translatable(secondary.value().getDescriptionId())).append(" II");
+        }
+        return title;
+    }
+
+    private MutableComponent iiiTitle() {
+        Holder<MobEffect> primary = primary(), secondary = secondary();
+        if (primary == null) return Component.translatable("friendlybeacons.bonus.primary_iii");
+        MutableComponent title = Component.translatable(primary.value().getDescriptionId()).append(" III");
+        if (secondary != null && !secondary.equals(primary)) {
+            title.append(" + ").append(Component.translatable(secondary.value().getDescriptionId()));
         }
         return title;
     }
@@ -192,16 +232,21 @@ public class Tier5Row extends AbstractWidget {
         if (effect != null) graphics.blit(x, y, 0, size, size, Minecraft.getInstance().getMobEffectTextures().get(effect));
     }
 
-    /** Both powers as overlapping small icons with "II", so the button reads as "both at II". */
-    private void renderIIIcon(GuiGraphics graphics, Font font, int x, int y) {
+    /**
+     * For II, both powers as overlapping small icons with "II", so the button reads as "both at II".
+     * For III, the primary with "III". A "»" while selected hints that clicking again switches.
+     */
+    private void renderLevelIcon(GuiGraphics graphics, Font font, int x, int y, boolean iii, boolean cycles) {
         Holder<MobEffect> primary = primary(), secondary = secondary();
-        if (secondary != null && !secondary.equals(primary)) {
+        if (!iii && secondary != null && !secondary.equals(primary)) {
             renderIcon(graphics, x + 2, y + 2, SMALL_ICON, primary);
             renderIcon(graphics, x + BUTTON_SIZE - 2 - SMALL_ICON, y + BUTTON_SIZE - 2 - SMALL_ICON, SMALL_ICON, secondary);
         } else {
             renderIcon(graphics, x + 2, y + 2, ICON, primary);
         }
-        graphics.drawString(font, "II", x + BUTTON_SIZE - 3 - font.width("II"), y + BUTTON_SIZE - 10, 0xFFFFFF, true);
+        String label = iii ? "III" : "II";
+        graphics.drawString(font, label, x + BUTTON_SIZE - 3 - font.width(label), y + BUTTON_SIZE - 10, 0xFFFFFF, true);
+        if (cycles) graphics.drawString(font, "\u00BB", x + BUTTON_SIZE - 2 - font.width("\u00BB"), y + 2, 0xFFFFFF, true);
     }
 
     /** The extra effect with a green "+", and a "»" while selected to hint that clicking again steps on. */
@@ -215,11 +260,12 @@ public class Tier5Row extends AbstractWidget {
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (!active || !visible || !isValidClickButton(button) || !unlocked()) return false;
         Minecraft minecraft = Minecraft.getInstance();
-        if (isOver(II_X, mouseX, mouseY) && iiAvailable()) {
-            if (thirdSelected()) {
-                playDownSound(minecraft.getSoundManager());
-                pending = BeaconSettings.BONUS_BOTH_II;
-            }
+        if (isOver(II_X, mouseX, mouseY) && levelAvailable()) {
+            int next = thirdSelected() ? levelBonus() : nextLevelBonus();
+            if (next != bonus()) playDownSound(minecraft.getSoundManager());
+            levelBonus = next;
+            levelPicked = true;
+            pending = next;
             return true;
         }
         if (isOver(THIRD_X, mouseX, mouseY) && thirdAvailable()) {

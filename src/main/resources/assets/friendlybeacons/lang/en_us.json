@@ -18,7 +18,21 @@
   "friendlybeacons.bonus.title": "Tier 5 bonus",
   "friendlybeacons.bonus.both_ii": "Both powers at level II",
   "friendlybeacons.bonus.both_ii.desc": "Tier 5 bonus: primary and secondary powers both at level II.",
+  "friendlybeacons.bonus.both_ii.cycle": "Tier 5 bonus: primary and secondary powers both at level II. Click again for the primary at level III.",
+  "friendlybeacons.bonus.primary_iii": "Primary power at level III",
+  "friendlybeacons.bonus.primary_iii.desc": "Tier 5 bonus: primary power at level III, secondary power at level I.",
+  "friendlybeacons.bonus.primary_iii.cycle": "Tier 5 bonus: primary power at level III, secondary power at level I. Click again for both powers at level II.",
+  "friendlybeacons.bonus.primary_iii.resistance_disabled": "Resistance III is turned off in the server config.",
   "friendlybeacons.bonus.extra.desc": "Tier 5 bonus: adds this as a third power at level I.",
   "friendlybeacons.bonus.extra.cycle": "Tier 5 bonus: third power at level I. Click again for another effect.",
-  "friendlybeacons.bonus.locked": "Requires a 5th pyramid layer (11x11)."
+  "friendlybeacons.bonus.locked": "Requires a 5th pyramid layer (11x11).",
+  "friendlybeacons.configuration.title": "Friendly Beacons Configuration",
+  "friendlybeacons.configuration.section.friendlybeacons.server.toml": "Server Settings",
+  "friendlybeacons.configuration.section.friendlybeacons.server.toml.title": "Friendly Beacons Server Settings",
+  "friendlybeacons.configuration.tierRadius": "Tier Radius",
+  "friendlybeacons.configuration.tierRadius.tooltip": "Maximum effect radius in blocks for pyramid tiers 1-5. Vanilla is 20, 30, 40, 50.",
+  "friendlybeacons.configuration.enableTier5": "Enable Tier 5",
+  "friendlybeacons.configuration.enableTier5.tooltip": "Allow a 5th pyramid layer (11x11) that unlocks the tier 5 radius and bonus.",
+  "friendlybeacons.configuration.allowResistanceIII": "Allow Resistance III",
+  "friendlybeacons.configuration.allowResistanceIII.tooltip": "Allow the tier 5 \"primary at III\" bonus to pick Resistance (60% less damage)."
 }

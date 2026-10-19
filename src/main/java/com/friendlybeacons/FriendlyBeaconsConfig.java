@@ -3,13 +3,14 @@ package com.friendlybeacons;
 import java.util.List;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
-/** Server config: per-tier radius and the hidden 5th tier. */
+/** Server config: per-tier radius, the hidden 5th tier and its Resistance III option. */
 public final class FriendlyBeaconsConfig {
     private static final List<Integer> DEFAULT_RADII = List.of(28, 40, 52, 64, 76);
 
     public static final ModConfigSpec SPEC;
     private static final ModConfigSpec.ConfigValue<List<? extends Integer>> TIER_RADIUS;
     private static final ModConfigSpec.BooleanValue ENABLE_TIER_5;
+    private static final ModConfigSpec.BooleanValue ALLOW_RESISTANCE_III;
 
     static {
         ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
@@ -20,6 +21,9 @@ public final class FriendlyBeaconsConfig {
         ENABLE_TIER_5 = builder
                 .comment("Allow a 5th pyramid layer (11x11) that unlocks the tier 5 radius and bonus.")
                 .define("enableTier5", true);
+        ALLOW_RESISTANCE_III = builder
+                .comment("Allow the tier 5 \"primary at III\" bonus to pick Resistance (60% less damage).")
+                .define("allowResistanceIII", false);
         SPEC = builder.build();
     }
 
@@ -27,6 +31,10 @@ public final class FriendlyBeaconsConfig {
 
     public static boolean tier5Enabled() {
         return SPEC.isLoaded() ? ENABLE_TIER_5.get() : true;
+    }
+
+    public static boolean resistanceIIIAllowed() {
+        return SPEC.isLoaded() && ALLOW_RESISTANCE_III.get();
     }
 
     /** Radius in blocks for a pyramid tier (1-5). Missing list entries fall back to the defaults. */
