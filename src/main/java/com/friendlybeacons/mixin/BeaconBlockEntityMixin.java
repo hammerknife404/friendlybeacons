@@ -30,8 +30,8 @@ public abstract class BeaconBlockEntityMixin {
     }
 
     /**
-     * Replaces applyEffects to support target categories, the configurable radius and the
-     * tier 5 bonus. Duration and the tier 1-4 power rules match vanilla.
+     * Replaces applyEffects to support target categories, the configurable radius, the tier 5
+     * bonus and Glowing, and the server-wide effect toggles. Duration and the tier 1-4 power rules match vanilla.
      */
     @Inject(method = "applyEffects", at = @At("HEAD"), cancellable = true)
     private static void friendlybeacons$applyEffects(Level level, BlockPos pos, int beaconLevel,
@@ -43,7 +43,9 @@ public abstract class BeaconBlockEntityMixin {
         if (mask == 0) return;
 
         List<BeaconSettings.Power> powers = BeaconSettings.powers(beaconLevel, primary, secondary,
-                beacon.getData(FriendlyBeacons.BEACON_BONUS));
+                beacon.getData(FriendlyBeacons.BEACON_BONUS), beacon.getData(FriendlyBeacons.BEACON_GLOW) != 0,
+                FriendlyBeaconsConfig.disabledEffects());
+        if (powers.isEmpty()) return;
 
         double range = BeaconSettings.radiusBlocks(beaconLevel, beacon.getData(FriendlyBeacons.BEACON_RADIUS));
         int duration = (9 + beaconLevel * 2) * 20;

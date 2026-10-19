@@ -90,6 +90,10 @@ public class Tier5Row extends AbstractWidget {
         return ((BeaconScreenAccessor) screen).friendlybeacons$getSecondary();
     }
 
+    private int disabled() {
+        return settings.friendlybeacons$getDisabledEffects();
+    }
+
     private int bonus() {
         return pending != null ? pending : settings.friendlybeacons$getBonus();
     }
@@ -102,8 +106,8 @@ public class Tier5Row extends AbstractWidget {
     private int thirdEffect() {
         int saved = settings.friendlybeacons$getBonus();
         if (!thirdPicked && saved != BeaconSettings.BONUS_BOTH_II) thirdEffect = saved;
-        if (thirdEffect < 1 || BeaconSettings.isRedundant(thirdEffect, primary(), secondary())) {
-            thirdEffect = BeaconSettings.nextEffectBonus(Math.max(thirdEffect, 0), primary(), secondary());
+        if (thirdEffect < 1 || BeaconSettings.isRedundant(thirdEffect, primary(), secondary(), disabled())) {
+            thirdEffect = BeaconSettings.nextEffectBonus(Math.max(thirdEffect, 0), primary(), secondary(), disabled());
         }
         return thirdEffect;
     }
@@ -114,11 +118,11 @@ public class Tier5Row extends AbstractWidget {
     }
 
     private boolean iiAvailable() {
-        return unlocked() && !BeaconSettings.isRedundant(BeaconSettings.BONUS_BOTH_II, primary(), secondary());
+        return unlocked() && !BeaconSettings.isRedundant(BeaconSettings.BONUS_BOTH_II, primary(), secondary(), disabled());
     }
 
     private boolean thirdAvailable() {
-        return unlocked() && !BeaconSettings.isRedundant(thirdEffect(), primary(), secondary());
+        return unlocked() && !BeaconSettings.isRedundant(thirdEffect(), primary(), secondary(), disabled());
     }
 
     /** Bonus a click at the mouse position would pick, or null if it wouldn't pick one. */
@@ -127,7 +131,7 @@ public class Tier5Row extends AbstractWidget {
         if (!visible || !unlocked()) return null;
         if (isOver(II_X, mouseX, mouseY) && iiAvailable()) return BeaconSettings.BONUS_BOTH_II;
         if (isOver(THIRD_X, mouseX, mouseY) && thirdAvailable()) {
-            return thirdSelected() ? BeaconSettings.nextEffectBonus(thirdEffect(), primary(), secondary()) : thirdEffect();
+            return thirdSelected() ? BeaconSettings.nextEffectBonus(thirdEffect(), primary(), secondary(), disabled()) : thirdEffect();
         }
         return null;
     }
@@ -225,7 +229,7 @@ public class Tier5Row extends AbstractWidget {
         if (isOver(THIRD_X, mouseX, mouseY) && thirdAvailable()) {
             playDownSound(minecraft.getSoundManager());
             if (thirdSelected()) {
-                thirdEffect = BeaconSettings.nextEffectBonus(thirdEffect(), primary(), secondary());
+                thirdEffect = BeaconSettings.nextEffectBonus(thirdEffect(), primary(), secondary(), disabled());
             }
             thirdPicked = true;
             pending = thirdEffect();

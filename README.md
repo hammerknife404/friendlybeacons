@@ -11,6 +11,8 @@ A NeoForge mod for Minecraft 1.21.1 that lets beacon effects apply to mobs, not 
 - A **Radius** button cycles through the radius of each tier your pyramid has reached, so you can keep a beacon off a mob farm next door.
 - Larger default reach: 28 / 40 / 52 / 64 blocks for tiers 1–4 (vanilla is 20 / 30 / 40 / 50).
 - A **tier 5**: add an 11×11 fifth layer under the pyramid to unlock a 76-block radius and a bonus (see below).
+- A **Glowing** checkbox (tier 5 only) makes everything the beacon affects glow through walls. Handy during a raid.
+- Server admins can turn each beacon effect off for the whole server, in game or in the config file.
 - Each beacon saves its own settings. A broken and re-placed beacon goes back to Player only and the largest radius.
 - Effect duration and the tier 1–4 power rules match vanilla.
 
@@ -36,14 +38,38 @@ The beacon screen shows a tier 5 row under the Secondary Power column, with a 5-
 
 Like vanilla powers, the pick only applies when you press Done with a payment item.
 
+A tier 5 beacon also gives **Glowing** to everything it affects, on top of its powers. The **Glowing** checkbox under the Radius button turns it off for that beacon. It works straight away and needs no payment item, so you can leave it off and switch it on when a raid starts. Glowing follows the Affects checkboxes, so with Player ticked, players glow too.
+
 ## Configuration
 
-`serverconfig/friendlybeacons-server.toml` in the world folder, created on first launch:
+`config/friendlybeacons-server.toml` in the server (or game) folder, created on first launch. A copy in the world's `serverconfig/` folder overrides it for that world.
 
 | Option        | Default                | Description                                                  |
 |---------------|------------------------|--------------------------------------------------------------|
 | `tierRadius`  | `[28, 40, 52, 64, 76]` | Maximum radius in blocks for tiers 1–5. Vanilla is `[20, 30, 40, 50]`. |
 | `enableTier5` | `true`                 | Allow the 5th pyramid layer.                                 |
+
+### Effect toggles
+
+The `[effects]` section has one `true`/`false` switch per effect: `speed`, `haste`, `resistance`, `jump_boost`, `strength`, `regeneration` and `glowing` (the tier 5 Glowing). All default to `true`. A disabled effect is greyed out on the beacon screen, can't be the tier 5 third power, and existing beacons stop giving it.
+
+```toml
+[effects]
+	speed = true
+	haste = true
+	resistance = false
+	jump_boost = true
+	strength = false
+	regeneration = true
+	glowing = true
+```
+
+Ops (permission level 2) can change them in game without a restart:
+
+- `/friendlybeacons effects` lists every effect and whether it's on.
+- `/friendlybeacons effect <name> <true|false>` turns one on or off and saves the config file.
+
+In singleplayer, the mod list's **Config** button opens the same settings.
 
 ## Compatibility
 

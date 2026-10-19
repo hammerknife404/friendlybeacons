@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Side panel next to the beacon screen: one checkbox per {@link BeaconTargets} category,
- * a radius cycle button and a preview of the beacon's powers. Kept to one panel on the left so
+ * a radius cycle button, the tier 5 Glowing checkbox and a preview of the beacon's powers. Kept to one panel on the left so
  * item list overlays such as JEI's on the right don't cover it.
  */
 public class BeaconTargetsPanel extends AbstractWidget {
@@ -38,23 +38,30 @@ public class BeaconTargetsPanel extends AbstractWidget {
     private static final int BUTTON_HEIGHT = 20;
     private static final int GAP = 4;
     private static final int TEXT_COLOR = 0x404040;
+    private static final int DISABLED_TEXT_COLOR = 0x8B8B8B;
     private static final int TOOLTIP_WIDTH = 170;
 
     /** Fits "Regeneration II" next to its icon. */
     public static final int WIDTH = 112;
     private static final int ROWS_BOTTOM = PADDING + TITLE_HEIGHT + BeaconTargets.values().length * ROW_HEIGHT - 2;
     private static final int RADIUS_TOP = ROWS_BOTTOM + GAP;
-    private static final int POWERS_TOP = RADIUS_TOP + BUTTON_HEIGHT + 2 * GAP;
+    private static final int GLOW_TOP = RADIUS_TOP + BUTTON_HEIGHT + GAP;
 
     private final BeaconMenu menu;
     private final BeaconTargetsHolder settings;
     private final PowersPreview powers;
+    /** The tier 5 Glowing checkbox is only shown when tier 5 is enabled. */
+    private final boolean showGlow;
+    private final int powersTop;
 
     public BeaconTargetsPanel(int x, int y, BeaconScreen screen, @Nullable Tier5Row tier5) {
-        super(x, y, WIDTH, POWERS_TOP + PADDING, Component.translatable("friendlybeacons.targets.title"));
+        super(x, y, WIDTH, 0, Component.translatable("friendlybeacons.targets.title"));
         this.menu = screen.getMenu();
         this.settings = (BeaconTargetsHolder) menu;
         this.powers = new PowersPreview(screen, tier5);
+        this.showGlow = tier5 != null;
+        this.powersTop = (showGlow ? GLOW_TOP + BOX : RADIUS_TOP + BUTTON_HEIGHT) + 2 * GAP;
+        this.height = powersTop + PADDING;
     }
 
     private int rowY(int row) {
@@ -75,10 +82,23 @@ public class BeaconTargetsPanel extends AbstractWidget {
         return mouseX >= getX() + PADDING && mouseX < getX() + width - PADDING && mouseY >= y && mouseY < y + BUTTON_HEIGHT;
     }
 
+    private boolean isOverGlowRow(double mouseX, double mouseY) {
+        int y = getY() + GLOW_TOP;
+        return showGlow && mouseX >= getX() + PADDING && mouseX < getX() + width - PADDING && mouseY >= y && mouseY < y + BOX;
+    }
+
+    private boolean glowDisabled() {
+        return BeaconSettings.isDisabled(BeaconSettings.GLOW_EFFECT, settings.friendlybeacons$getDisabledEffects());
+    }
+
+    private boolean glowAvailable() {
+        return menu.getLevels() >= 5 && !glowDisabled();
+    }
+
     @Override
     protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         Font font = Minecraft.getInstance().font;
-        height = POWERS_TOP + powers.update(mouseX, mouseY, width - 2 * PADDING) + PADDING;
+        height = powersTop + powers.update(mouseX, mouseY, width - 2 * PADDING) + PADDING;
         int x = getX(), y = getY(), right = x + width, bottom = y + height;
 
         // Vanilla container-style bevelled panel.
@@ -105,18 +125,25 @@ public class BeaconTargetsPanel extends AbstractWidget {
 
         boolean radiusHovered = isHovered() && isOverRadiusButton(mouseX, mouseY);
         renderRadiusButton(graphics, font, radiusHovered);
+        boolean glowHovered = isHovered() && isOverGlowRow(mouseX, mouseY);
+        if (showGlow) renderGlowRow(graphics, font, glowHovered);
 
         // Divider above the Powers section, in the panel's bevel colors.
-        int dividerY = y + POWERS_TOP - GAP - 1;
+        int dividerY = y + powersTop - GAP - 1;
         graphics.fill(x + PADDING, dividerY - 1, right - PADDING, dividerY, 0xFF555555);
         graphics.fill(x + PADDING, dividerY, right - PADDING, dividerY + 1, 0xFFFFFFFF);
-        powers.render(graphics, x + PADDING, y + POWERS_TOP, width - 2 * PADDING);
+        powers.render(graphics, x + PADDING, y + powersTop, width - 2 * PADDING);
 
         List<FormattedCharSequence> tooltip = null;
         if (hoveredRow >= 0) {
             tooltip = font.split(values[hoveredRow].description(), TOOLTIP_WIDTH);
         } else if (radiusHovered) {
             tooltip = font.split(Component.translatable("friendlybeacons.radius.desc"), TOOLTIP_WIDTH);
+        } else if (glowHovered) {
+            String key = glowDisabled() ? "friendlybeacons.glow.disabled"
+                    : menu.getLevels() < 5 ? "friendlybeacons.glow.locked"
+                    : "friendlybeacons.glow.desc";
+            tooltip = font.split(Component.translatable(key), TOOLTIP_WIDTH);
         }
         if (tooltip != null && Minecraft.getInstance().screen != null) {
             Minecraft.getInstance().screen.setTooltipForNextRenderPass(tooltip);
@@ -135,6 +162,22 @@ public class BeaconTargetsPanel extends AbstractWidget {
         graphics.drawCenteredString(font, label, bx + bw / 2, by + (BUTTON_HEIGHT - 8) / 2, enabled ? 0xFFFFFF : 0xA0A0A0);
     }
 
+    /** Checkbox for the tier 5 Glowing effect, dimmed until tier 5 or while disabled server-wide. */
+    private void renderGlowRow(GuiGraphics graphics, Font font, boolean hovered) {
+        boolean available = glowAvailable();
+        boolean selected = settings.friendlybeacons$getGlow();
+        boolean highlighted = hovered && available;
+        ResourceLocation sprite = selected
+                ? (highlighted ? CHECKBOX_SELECTED_HIGHLIGHTED : CHECKBOX_SELECTED)
+                : (highlighted ? CHECKBOX_HIGHLIGHTED : CHECKBOX);
+        int rowY = getY() + GLOW_TOP;
+        if (!available) graphics.setColor(0.5F, 0.5F, 0.5F, 1.0F);
+        graphics.blitSprite(sprite, getX() + PADDING, rowY, BOX, BOX);
+        graphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+        graphics.drawString(font, Component.translatable("friendlybeacons.glow"), getX() + PADDING + BOX + 4,
+                rowY + (BOX - font.lineHeight) / 2 + 1, available ? TEXT_COLOR : DISABLED_TEXT_COLOR, false);
+    }
+
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (!active || !visible || !isValidClickButton(button)) return false;
@@ -146,6 +189,14 @@ public class BeaconTargetsPanel extends AbstractWidget {
             playDownSound(minecraft.getSoundManager());
             settings.friendlybeacons$setTargets(settings.friendlybeacons$getTargets() ^ BeaconTargets.values()[row].bit());
             minecraft.gameMode.handleInventoryButtonClick(menu.containerId, row);
+            return true;
+        }
+
+        if (isOverGlowRow(mouseX, mouseY)) {
+            if (!glowAvailable()) return false;
+            playDownSound(minecraft.getSoundManager());
+            settings.friendlybeacons$setGlow(!settings.friendlybeacons$getGlow());
+            minecraft.gameMode.handleInventoryButtonClick(menu.containerId, BeaconSettings.BUTTON_GLOW);
             return true;
         }
 
