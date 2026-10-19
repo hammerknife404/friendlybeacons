@@ -33,6 +33,10 @@
   "friendlybeacons.configuration.tierRadius.tooltip": "Maximum effect radius in blocks for pyramid tiers 1-5. Vanilla is 20, 30, 40, 50.",
   "friendlybeacons.configuration.enableTier5": "Enable Tier 5",
   "friendlybeacons.configuration.enableTier5.tooltip": "Allow a 5th pyramid layer (11x11) that unlocks the tier 5 radius and bonus.",
+  "friendlybeacons.configuration.enableLevelIII": "Enable Level III",
+  "friendlybeacons.configuration.enableLevelIII.tooltip": "Allow the tier 5 bonus that raises the primary power to level III. Resistance also needs Allow Resistance III.",
   "friendlybeacons.configuration.allowResistanceIII": "Allow Resistance III",
-  "friendlybeacons.configuration.allowResistanceIII.tooltip": "Allow the tier 5 \"primary at III\" bonus to pick Resistance (60% less damage)."
+  "friendlybeacons.configuration.allowResistanceIII.tooltip": "Allow the tier 5 \"primary at III\" bonus to pick Resistance (60% less damage). Only applies while Enable Level III is on.",
+  "friendlybeacons.configuration.effects": "Beacon Effects",
+  "friendlybeacons.configuration.effects.tooltip": "Effects beacons can give. A turned off effect can't be picked, and beacons that already have it stop giving it."
 }

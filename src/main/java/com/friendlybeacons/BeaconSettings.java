@@ -55,9 +55,11 @@ public final class BeaconSettings {
     public static boolean isRedundant(int bonus, @Nullable Holder<MobEffect> primary, @Nullable Holder<MobEffect> secondary) {
         if (primary == null) return true;
         if (bonus == BONUS_BOTH_II) return Objects.equals(primary, secondary);
-        if (bonus == BONUS_PRIMARY_III) return isResistanceIIIBlocked(primary);
+        if (bonus == BONUS_PRIMARY_III) {
+            return !FriendlyBeaconsConfig.levelIIIEnabled() || !FriendlyBeaconsConfig.effectEnabled(primary) || isResistanceIIIBlocked(primary);
+        }
         Holder<MobEffect> effect = bonusEffect(bonus);
-        return effect == null || effect.equals(primary) || effect.equals(secondary);
+        return effect == null || !FriendlyBeaconsConfig.effectEnabled(effect) || effect.equals(primary) || effect.equals(secondary);
     }
 
     /** Next third-power bonus after the given one, skipping effects the powers already cover. */
@@ -88,13 +90,14 @@ public final class BeaconSettings {
 
     /**
      * Effects a beacon gives with these levels, powers and tier 5 bonus. Tier 1-4 rules match
-     * vanilla. Used by the server to apply effects and by the client to preview them.
+     * vanilla, minus effects turned off in the config. Used by the server to apply effects and by
+     * the client to preview them.
      */
     public static List<Power> powers(int levels, @Nullable Holder<MobEffect> primary, @Nullable Holder<MobEffect> secondary, int bonus) {
         List<Power> powers = new ArrayList<>();
         if (levels <= 0 || primary == null) return powers;
         boolean tier5 = levels >= 5;
-        // A saved Resistance III falls back to the default bonus if the config no longer allows it.
+        // A saved III falls back to the default bonus if the config no longer allows it.
         if (bonus == BONUS_PRIMARY_III && isRedundant(bonus, primary, secondary)) bonus = BONUS_BOTH_II;
         boolean bothII = tier5 && bonus == BONUS_BOTH_II;
         boolean primaryIII = tier5 && bonus == BONUS_PRIMARY_III;
@@ -107,6 +110,7 @@ public final class BeaconSettings {
             Holder<MobEffect> extra = bonusEffect(bonus);
             if (extra != null) powers.add(new Power(extra, 0));
         }
+        powers.removeIf(power -> !FriendlyBeaconsConfig.effectEnabled(power.effect()));
         return powers;
     }
 }

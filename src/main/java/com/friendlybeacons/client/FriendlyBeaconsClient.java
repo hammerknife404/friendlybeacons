@@ -7,10 +7,11 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 
-/** Client entrypoint: adds the config screen to the Mods list. */
+/** Client entrypoint: adds the config screen, with effect icons on the effect toggles, to the Mods list. */
 @Mod(value = FriendlyBeacons.MOD_ID, dist = Dist.CLIENT)
 public class FriendlyBeaconsClient {
     public FriendlyBeaconsClient(ModContainer container) {
-        container.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
+        container.registerExtensionPoint(IConfigScreenFactory.class,
+                (mod, parent) -> new ConfigurationScreen(mod, parent, new EffectToggleFilter()));
     }
 }

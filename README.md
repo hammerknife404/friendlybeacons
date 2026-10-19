@@ -31,7 +31,7 @@ A fifth pyramid layer (11×11, 285 blocks in total) unlocks a 76-block radius st
 
 The beacon screen shows a tier 5 row under the Secondary Power column, with a 5-layer pyramid icon and two buttons. It stays greyed out until the fifth layer is built.
 
-- **II / III**: the primary and secondary powers both at level II (e.g. Haste II + Regeneration II), or the primary at level III with the secondary at level I (e.g. Haste III + Regeneration). Click the button again while it's selected to switch between the two. Resistance III is off unless the server config allows it.
+- **II / III**: the primary and secondary powers both at level II (e.g. Haste II + Regeneration II), or the primary at level III with the secondary at level I (e.g. Haste III + Regeneration). Click the button again while it's selected to switch between the two. The server config can turn III off, and Resistance III is off unless the config allows it.
 - **Third power** (marked with a green **+**): a third power at level I, chosen from the vanilla beacon effects plus Glowing. Click it again while it's selected to step to the next effect. It skips effects your powers already cover.
 
 Like vanilla powers, the pick only applies when you press Done with a payment item.
@@ -44,9 +44,11 @@ Like vanilla powers, the pick only applies when you press Done with a payment it
 |---------------|------------------------|--------------------------------------------------------------|
 | `tierRadius`  | `[28, 40, 52, 64, 76]` | Maximum radius in blocks for tiers 1–5. Vanilla is `[20, 30, 40, 50]`. |
 | `enableTier5` | `true`                 | Allow the 5th pyramid layer.                                 |
-| `allowResistanceIII` | `false`         | Allow the tier 5 III bonus to pick Resistance (60% less damage). |
+| `enableLevelIII` | `true`              | Allow the tier 5 III bonus (primary at level III).            |
+| `allowResistanceIII` | `false`         | Allow the III bonus to pick Resistance (60% less damage). Needs `enableLevelIII`. |
+| `[effects]`   | all `true`             | One toggle per effect (`speed`, `haste`, `resistance`, `jump_boost`, `strength`, `regeneration`, `glowing`). A turned off effect can't be picked, and beacons that already have it stop giving it. |
 
-The same options are in the in-game Mods list under Friendly Beacons > Config, while you're in a world you host. On a dedicated server, edit the file.
+The same options are in the in-game Mods list under Friendly Beacons > Config, with each effect's icon next to its toggle. NeoForge only allows editing them in a singleplayer world that isn't open to LAN. On a dedicated server, edit the file.
 
 ## Compatibility
 

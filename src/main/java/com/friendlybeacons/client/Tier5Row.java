@@ -3,6 +3,7 @@ package com.friendlybeacons.client;
 import com.friendlybeacons.BeaconSettings;
 import com.friendlybeacons.BeaconTargetsHolder;
 import com.friendlybeacons.FriendlyBeacons;
+import com.friendlybeacons.FriendlyBeaconsConfig;
 import com.friendlybeacons.mixin.client.BeaconScreenAccessor;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -183,7 +184,7 @@ public class Tier5Row extends AbstractWidget {
             String desc = iii ? "friendlybeacons.bonus.primary_iii" : "friendlybeacons.bonus.both_ii";
             tooltip = tooltip(iii ? iiiTitle() : iiTitle(), desc + (levelCycles ? ".cycle" : ".desc"), unlocked);
             Holder<MobEffect> primary = primary();
-            if (unlocked && primary != null && BeaconSettings.isResistanceIIIBlocked(primary)) {
+            if (unlocked && primary != null && FriendlyBeaconsConfig.levelIIIEnabled() && BeaconSettings.isResistanceIIIBlocked(primary)) {
                 tooltip.addAll(Minecraft.getInstance().font.split(Component.translatable("friendlybeacons.bonus.primary_iii.resistance_disabled")
                         .withStyle(ChatFormatting.DARK_GRAY), TOOLTIP_WIDTH));
             }
