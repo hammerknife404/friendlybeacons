@@ -56,7 +56,8 @@ class PowersPreview {
     int update(int mouseX, int mouseY, int width) {
         Font font = Minecraft.getInstance().font;
         int levels = menu.getLevels();
-        boolean glow = settings.friendlybeacons$getGlow();
+        // Listed if Glowing reaches any category; its own targets are set in the Glowing column.
+        boolean glow = settings.friendlybeacons$getGlowTargets() != 0;
         int disabled = settings.friendlybeacons$getDisabledEffects();
         List<BeaconSettings.Power> applied = BeaconSettings.powers(levels, menu.getPrimaryEffect(), menu.getSecondaryEffect(),
                 settings.friendlybeacons$getBonus(), glow, disabled);

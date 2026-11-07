@@ -16,7 +16,8 @@ public final class BeaconSettings {
 
     // Menu button ids. 0-3 are the BeaconTargets checkboxes.
     public static final int BUTTON_RADIUS = 4;
-    public static final int BUTTON_GLOW = 5;
+    /** Toggles Glowing for BeaconTargets category (id - BUTTON_GLOW_TARGETS). */
+    public static final int BUTTON_GLOW_TARGETS = 10;
     /** Sets the tier 5 bonus to (id - BUTTON_SET_BONUS). Sent just before the vanilla Done packet. */
     public static final int BUTTON_SET_BONUS = 100;
 
@@ -44,8 +45,18 @@ public final class BeaconSettings {
     public static final List<Holder<MobEffect>> BONUS_EFFECTS =
             BeaconBlockEntity.BEACON_EFFECTS.stream().flatMap(List::stream).toList();
 
-    /** Given by every tier 5 beacon unless its Glowing checkbox is off. */
+    /** Given by tier 5 beacons to the categories ticked in their Glowing column. */
     public static final Holder<MobEffect> GLOW_EFFECT = MobEffects.GLOWING;
+
+    /** Glowing targets of a new beacon: hostile mobs, so they show through walls during a raid. */
+    public static final int GLOW_TARGETS_DEFAULT = BeaconTargets.HOSTILE.bit();
+    /** Stored before a beacon's Glowing targets are first set, see FriendlyBeacons.glowTargets. */
+    public static final int GLOW_TARGETS_UNSET = -1;
+
+    /** Whether a beacon gives Glowing to its Glowing targets. Needs tier 5 and a primary power, like the other powers. */
+    public static boolean givesGlow(int levels, @Nullable Holder<MobEffect> primary, int glowTargets, int disabled) {
+        return levels >= 5 && primary != null && glowTargets != 0 && !isDisabled(GLOW_EFFECT, disabled);
+    }
 
     /** Effects admins can turn off server-wide: the vanilla beacon powers plus tier 5 Glowing. */
     public static final List<Holder<MobEffect>> TOGGLEABLE_EFFECTS =
@@ -96,9 +107,9 @@ public final class BeaconSettings {
     public record Power(Holder<MobEffect> effect, int amplifier) {}
 
     /**
-     * Effects a beacon gives with these levels, powers, tier 5 bonus and Glowing checkbox, minus
-     * the effects disabled server-wide. Tier 1-4 rules match vanilla. Used by the server to apply
-     * effects and by the client to preview them.
+     * Effects a beacon gives with these levels, powers and tier 5 bonus, minus the effects disabled
+     * server-wide. Tier 1-4 rules match vanilla. With glow, Glowing is listed too (for the client
+     * preview); the server applies Glowing separately since it has its own targets.
      */
     public static List<Power> powers(int levels, @Nullable Holder<MobEffect> primary, @Nullable Holder<MobEffect> secondary,
             int bonus, boolean glow, int disabled) {

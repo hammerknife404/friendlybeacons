@@ -41,7 +41,7 @@ public abstract class BeaconMenuMixin extends AbstractContainerMenu implements B
     @Unique
     private DataSlot friendlybeacons$bonus;
     @Unique
-    private DataSlot friendlybeacons$glow;
+    private DataSlot friendlybeacons$glow; // Glowing targets mask
     @Unique
     private DataSlot friendlybeacons$disabledEffects;
 
@@ -61,7 +61,7 @@ public abstract class BeaconMenuMixin extends AbstractContainerMenu implements B
         friendlybeacons$bonus = addDataSlot(new SyncedBeaconSlot(access,
                 beacon -> beacon.getData(FriendlyBeacons.BEACON_BONUS), BeaconSettings.BONUS_BOTH_II));
         friendlybeacons$glow = addDataSlot(new SyncedBeaconSlot(access,
-                beacon -> beacon.getData(FriendlyBeacons.BEACON_GLOW), 1));
+                FriendlyBeacons::glowTargets, BeaconSettings.GLOW_TARGETS_DEFAULT));
         // Server-wide, but synced per menu so /friendlybeacons effect changes reach open screens.
         friendlybeacons$disabledEffects = addDataSlot(new SyncedBeaconSlot(access,
                 beacon -> FriendlyBeaconsConfig.disabledEffects(), 0));
@@ -79,9 +79,10 @@ public abstract class BeaconMenuMixin extends AbstractContainerMenu implements B
             } else if (id == BeaconSettings.BUTTON_RADIUS && levels > 0) {
                 beacon.setData(FriendlyBeacons.BEACON_RADIUS,
                         BeaconSettings.nextRadiusSelection(levels, beacon.getData(FriendlyBeacons.BEACON_RADIUS)));
-            } else if (id == BeaconSettings.BUTTON_GLOW) {
+            } else if (id >= BeaconSettings.BUTTON_GLOW_TARGETS && id < BeaconSettings.BUTTON_GLOW_TARGETS + BeaconTargets.values().length) {
                 // Free and instant like the target checkboxes, so it can be flipped on for a raid.
-                beacon.setData(FriendlyBeacons.BEACON_GLOW, beacon.getData(FriendlyBeacons.BEACON_GLOW) != 0 ? 0 : 1);
+                int bit = BeaconTargets.values()[id - BeaconSettings.BUTTON_GLOW_TARGETS].bit();
+                beacon.setData(FriendlyBeacons.BEACON_GLOW_TARGETS, FriendlyBeacons.glowTargets(beacon) ^ bit);
             } else if (BeaconSettings.isValidBonus(id - BeaconSettings.BUTTON_SET_BONUS) && levels >= 5 && self.hasPayment()) {
                 // Like vanilla powers this needs a payment item; the Done packet that follows consumes it.
                 beacon.setData(FriendlyBeacons.BEACON_BONUS, id - BeaconSettings.BUTTON_SET_BONUS);
@@ -114,13 +115,13 @@ public abstract class BeaconMenuMixin extends AbstractContainerMenu implements B
     }
 
     @Override
-    public boolean friendlybeacons$getGlow() {
-        return friendlybeacons$glow.get() != 0;
+    public int friendlybeacons$getGlowTargets() {
+        return friendlybeacons$glow.get();
     }
 
     @Override
-    public void friendlybeacons$setGlow(boolean glow) {
-        friendlybeacons$glow.set(glow ? 1 : 0);
+    public void friendlybeacons$setGlowTargets(int mask) {
+        friendlybeacons$glow.set(mask);
     }
 
     @Override

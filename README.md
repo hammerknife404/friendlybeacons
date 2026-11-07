@@ -11,9 +11,9 @@ A NeoForge mod for Minecraft 1.21.1 that lets beacon effects apply to mobs, not 
 - A **Radius** button cycles through the radius of each tier your pyramid has reached, so you can keep a beacon off a mob farm next door.
 - Larger default reach: 28 / 40 / 52 / 64 blocks for tiers 1–4 (vanilla is 20 / 30 / 40 / 50).
 - A **tier 5**: add an 11×11 fifth layer under the pyramid to unlock a 76-block radius and a bonus (see below).
-- A **Glowing** checkbox (tier 5 only) makes everything the beacon affects glow through walls. Handy during a raid.
+- A **Glowing** column (tier 5 only) makes the mob types you pick glow through walls, separately from the ones that get the powers. Handy during a raid.
 - Server admins can turn each beacon effect off for the whole server, in game or in the config file.
-- Each beacon saves its own settings. A broken and re-placed beacon goes back to Player only and the largest radius.
+- Each beacon saves its own settings. A broken and re-placed beacon goes back to Player only, Glowing on hostile mobs only, and the largest radius.
 - Effect duration and the tier 1–4 power rules match vanilla.
 
 ## Categories
@@ -38,7 +38,11 @@ The beacon screen shows a tier 5 row under the Secondary Power column, with a 5-
 
 Like vanilla powers, the pick only applies when you press Done with a payment item.
 
-A tier 5 beacon also gives **Glowing** to everything it affects, on top of its powers. The **Glowing** checkbox under the Radius button turns it off for that beacon. It works straight away and needs no payment item, so you can leave it off and switch it on when a raid starts. Glowing follows the Affects checkboxes, so with Player ticked, players glow too.
+A tier 5 beacon can also give **Glowing**. The Affects panel has a second column of checkboxes on the right, under a Glowing icon, with one checkbox per category. Ticked categories glow, visible through walls.
+
+Glowing is separate from the Affects checkboxes on the left. For example, you can give Strength to players and make only hostile mobs glow, without the hostile mobs getting Strength. New beacons start with Hostile ticked. The Glowing checkboxes work straight away and need no payment item, so you can leave them off and switch them on when a raid starts. Like the other powers, Glowing needs a primary power picked.
+
+Beacons from 1.3.0 keep glowing what they did before: their Affects categories if their old Glowing checkbox was on, nothing if it was off.
 
 ## Configuration
 
@@ -88,7 +92,7 @@ Put `friendlybeacons-<version>.jar` in the `mods/` folder. Install it on both th
 
 - The settings are stored as NeoForge data attachments on the beacon block entity.
 - They sync to the client through extra data slots on the beacon menu.
-- Clicking a checkbox, the Radius button or Done (for the tier 5 bonus) sends Minecraft's built-in container button click packet, so the mod adds no custom packets.
+- Clicking a checkbox (Affects or Glowing), the Radius button or Done (for the tier 5 bonus) sends Minecraft's built-in container button click packet, so the mod adds no custom packets.
 - The mod registers one required network channel that is never used. It makes NeoForge turn away clients without the mod at login, instead of letting them crash when they open a beacon.
 - The vanilla effect code is replaced with a copy that handles the target categories, the radius and the tier 5 bonus.
 - Tier 5 works by letting the vanilla pyramid check look at a fifth layer. Vanilla code already handles a level above 4.
