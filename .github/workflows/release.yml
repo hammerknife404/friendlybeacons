@@ -1,8 +1,15 @@
 name: Release
 
+# Two ways to release:
+# - Push a tag like v1.4.0 that matches mod_version.
+# - Run this workflow by hand on main ("Run workflow" in the Actions tab). It reads
+#   mod_version, creates the matching tag and release on the current commit, and
+#   refuses if that tag already exists.
+
 on:
   push:
     tags: ['v*']
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -20,13 +27,27 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
-      - name: Check tag matches mod_version
+      - name: Work out the release tag
         run: |
           version=$(grep '^mod_version=' gradle.properties | cut -d= -f2)
-          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
-            echo "Tag $GITHUB_REF_NAME does not match mod_version $version"
-            exit 1
+          tag="v$version"
+          if [ "$GITHUB_EVENT_NAME" = push ]; then
+            if [ "$tag" != "$GITHUB_REF_NAME" ]; then
+              echo "Tag $GITHUB_REF_NAME does not match mod_version $version"
+              exit 1
+            fi
+          else
+            if [ "$GITHUB_REF_NAME" != main ]; then
+              echo "Run this workflow on main, not $GITHUB_REF_NAME"
+              exit 1
+            fi
+            if git ls-remote --exit-code --tags origin "refs/tags/$tag" > /dev/null; then
+              echo "$tag already exists. Bump mod_version in gradle.properties first."
+              exit 1
+            fi
           fi
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+          echo "TAG=$tag" >> "$GITHUB_ENV"
 
       - name: Build
         run: ./gradlew build
@@ -35,7 +56,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          version=${GITHUB_REF_NAME#v}
-          gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1 \
-            || gh release create "$GITHUB_REF_NAME" --title "Friendly Beacons $version" --generate-notes
-          gh release upload "$GITHUB_REF_NAME" "build/libs/friendlybeacons-$version.jar" --clobber
+          # On a manual run this also creates the tag, on the commit that was built.
+          gh release view "$TAG" > /dev/null 2>&1 \
+            || gh release create "$TAG" --target "$GITHUB_SHA" --title "Friendly Beacons $VERSION" --generate-notes
+          gh release upload "$TAG" "build/libs/friendlybeacons-$VERSION.jar" --clobber
