@@ -39,20 +39,30 @@ public abstract class BeaconBlockEntityMixin {
         if (level.isClientSide || primary == null) return;
         if (!(level.getBlockEntity(pos) instanceof BeaconBlockEntity beacon)) return;
         ci.cancel();
-        int mask = beacon.getData(FriendlyBeacons.BEACON_TARGETS);
-        if (mask == 0) return;
+        int targets = beacon.getData(FriendlyBeacons.BEACON_TARGETS);
+        int glowTargets = FriendlyBeacons.glowTargets(beacon);
+        int disabled = FriendlyBeaconsConfig.disabledEffects();
 
-        List<BeaconSettings.Power> powers = BeaconSettings.powers(beaconLevel, primary, secondary,
-                beacon.getData(FriendlyBeacons.BEACON_BONUS), beacon.getData(FriendlyBeacons.BEACON_GLOW) != 0,
-                FriendlyBeaconsConfig.disabledEffects());
-        if (powers.isEmpty()) return;
+        // Glowing has its own targets, so it's applied apart from the other powers.
+        List<BeaconSettings.Power> powers = targets == 0 ? List.of() : BeaconSettings.powers(beaconLevel, primary, secondary,
+                beacon.getData(FriendlyBeacons.BEACON_BONUS), false, disabled);
+        if (powers.isEmpty()) targets = 0;
+        if (!BeaconSettings.givesGlow(beaconLevel, primary, glowTargets, disabled)) glowTargets = 0;
+        if (targets == 0 && glowTargets == 0) return;
 
         double range = BeaconSettings.radiusBlocks(beaconLevel, beacon.getData(FriendlyBeacons.BEACON_RADIUS));
         int duration = (9 + beaconLevel * 2) * 20;
         AABB area = new AABB(pos).inflate(range).expandTowards(0.0, level.getHeight(), 0.0);
-        for (LivingEntity entity : level.getEntitiesOfClass(LivingEntity.class, area, e -> BeaconTargets.matches(e, mask))) {
-            for (BeaconSettings.Power power : powers) {
-                entity.addEffect(new MobEffectInstance(power.effect(), duration, power.amplifier(), true, true));
+        int anyTargets = targets | glowTargets;
+        for (LivingEntity entity : level.getEntitiesOfClass(LivingEntity.class, area, e -> BeaconTargets.matches(e, anyTargets))) {
+            BeaconTargets category = BeaconTargets.of(entity);
+            if (category.isIn(targets)) {
+                for (BeaconSettings.Power power : powers) {
+                    entity.addEffect(new MobEffectInstance(power.effect(), duration, power.amplifier(), true, true));
+                }
+            }
+            if (category.isIn(glowTargets)) {
+                entity.addEffect(new MobEffectInstance(BeaconSettings.GLOW_EFFECT, duration, 0, true, true));
             }
         }
     }

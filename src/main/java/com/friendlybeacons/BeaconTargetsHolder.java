@@ -12,11 +12,11 @@ public interface BeaconTargetsHolder {
 
     int friendlybeacons$getBonus();
 
-    /** Whether the beacon's tier 5 Glowing checkbox is on. */
-    boolean friendlybeacons$getGlow();
+    /** Categories the beacon gives tier 5 Glowing to, as a {@link BeaconTargets} mask. */
+    int friendlybeacons$getGlowTargets();
 
     /** Client-side optimistic update; the server value overwrites it on the next sync. */
-    void friendlybeacons$setGlow(boolean glow);
+    void friendlybeacons$setGlowTargets(int mask);
 
     /** Effects disabled server-wide, as a mask of {@link BeaconSettings#effectBit} bits. */
     int friendlybeacons$getDisabledEffects();
