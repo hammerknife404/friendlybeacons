@@ -106,6 +106,12 @@ Requires JDK 21. If it isn't installed, Gradle downloads it automatically.
 ./gradlew runClient  # launch a dev client with the mod
 ```
 
+Builds are versioned `X.Y.Z-dev` locally and `X.Y.Z-dev.<commit>` in CI; only the Release workflow builds a plain `X.Y.Z` jar, so a test build can't be mistaken for a release.
+
+## Releasing
+
+Bump `mod_version` in `gradle.properties` and merge to `main`. The Release workflow builds the jar and publishes a GitHub release tagged `v<version>`, with notes generated from the merged PRs. Pushes that don't change the version don't create a release. To retry a failed release, run the Release workflow by hand on `main`.
+
 ## License
 
 MIT
