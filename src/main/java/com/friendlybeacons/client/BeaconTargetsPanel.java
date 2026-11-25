@@ -3,6 +3,7 @@ package com.friendlybeacons.client;
 import com.friendlybeacons.BeaconSettings;
 import com.friendlybeacons.BeaconTargets;
 import com.friendlybeacons.BeaconTargetsHolder;
+import com.friendlybeacons.CreativeBeacon;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.Minecraft;
@@ -45,7 +46,8 @@ public class BeaconTargetsPanel extends AbstractWidget {
     /** Fits "Regeneration II" next to its icon. */
     public static final int WIDTH = 112;
     private static final int ROWS_BOTTOM = PADDING + TITLE_HEIGHT + BeaconTargets.values().length * ROW_HEIGHT - 2;
-    private static final int RADIUS_TOP = ROWS_BOTTOM + GAP;
+    /** Top of the button stack: the creative Tier button (creative beacons only), then Radius. */
+    private static final int BUTTONS_TOP = ROWS_BOTTOM + GAP;
     /** Size of the Glowing icon above the Glowing column. */
     private static final int GLOW_ICON = 12;
 
@@ -54,7 +56,6 @@ public class BeaconTargetsPanel extends AbstractWidget {
     private final PowersPreview powers;
     /** The tier 5 Glowing column is only shown when tier 5 is enabled. */
     private final boolean showGlow;
-    private final int powersTop;
 
     public BeaconTargetsPanel(int x, int y, BeaconScreen screen, @Nullable Tier5Row tier5) {
         super(x, y, WIDTH, 0, Component.translatable("friendlybeacons.targets.title"));
@@ -62,8 +63,24 @@ public class BeaconTargetsPanel extends AbstractWidget {
         this.settings = (BeaconTargetsHolder) menu;
         this.powers = new PowersPreview(screen, tier5);
         this.showGlow = tier5 != null;
-        this.powersTop = RADIUS_TOP + BUTTON_HEIGHT + 2 * GAP;
-        this.height = powersTop + PADDING;
+        this.height = powersTop() + PADDING;
+    }
+
+    /** Synced after the screen opens, so checked every frame. */
+    private boolean creative() {
+        return settings.friendlybeacons$isCreative();
+    }
+
+    private int tierTop() {
+        return BUTTONS_TOP;
+    }
+
+    private int radiusTop() {
+        return creative() ? BUTTONS_TOP + BUTTON_HEIGHT + GAP : BUTTONS_TOP;
+    }
+
+    private int powersTop() {
+        return radiusTop() + BUTTON_HEIGHT + 2 * GAP;
     }
 
     private int rowY(int row) {
@@ -100,9 +117,17 @@ public class BeaconTargetsPanel extends AbstractWidget {
         return showGlow && mouseX >= x && mouseX < x + GLOW_ICON && mouseY >= y && mouseY < y + GLOW_ICON;
     }
 
-    private boolean isOverRadiusButton(double mouseX, double mouseY) {
-        int y = getY() + RADIUS_TOP;
+    private boolean isOverButton(int top, double mouseX, double mouseY) {
+        int y = getY() + top;
         return mouseX >= getX() + PADDING && mouseX < getX() + width - PADDING && mouseY >= y && mouseY < y + BUTTON_HEIGHT;
+    }
+
+    private boolean isOverRadiusButton(double mouseX, double mouseY) {
+        return isOverButton(radiusTop(), mouseX, mouseY);
+    }
+
+    private boolean isOverTierButton(double mouseX, double mouseY) {
+        return creative() && isOverButton(tierTop(), mouseX, mouseY);
     }
 
     private boolean glowDisabled() {
@@ -116,6 +141,7 @@ public class BeaconTargetsPanel extends AbstractWidget {
     @Override
     protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         Font font = Minecraft.getInstance().font;
+        int powersTop = powersTop();
         height = powersTop + powers.update(mouseX, mouseY, width - 2 * PADDING) + PADDING;
         int x = getX(), y = getY(), right = x + width, bottom = y + height;
 
@@ -140,6 +166,8 @@ public class BeaconTargetsPanel extends AbstractWidget {
         boolean glowIconHovered = isHovered() && isOverGlowIcon(mouseX, mouseY);
         if (showGlow) renderGlowColumn(graphics, hoveredGlowRow);
 
+        boolean tierHovered = isHovered() && isOverTierButton(mouseX, mouseY);
+        if (creative()) renderTierButton(graphics, font, tierHovered);
         boolean radiusHovered = isHovered() && isOverRadiusButton(mouseX, mouseY);
         renderRadiusButton(graphics, font, radiusHovered);
 
@@ -152,6 +180,8 @@ public class BeaconTargetsPanel extends AbstractWidget {
         List<FormattedCharSequence> tooltip = null;
         if (hoveredRow >= 0) {
             tooltip = font.split(values[hoveredRow].description(), TOOLTIP_WIDTH);
+        } else if (tierHovered) {
+            tooltip = font.split(Component.translatable("friendlybeacons.creative.tier.desc"), TOOLTIP_WIDTH);
         } else if (radiusHovered) {
             tooltip = font.split(Component.translatable("friendlybeacons.radius.desc"), TOOLTIP_WIDTH);
         } else if (hoveredGlowRow >= 0 || glowIconHovered) {
@@ -175,7 +205,20 @@ public class BeaconTargetsPanel extends AbstractWidget {
         Component label = enabled
                 ? Component.translatable("friendlybeacons.radius", radius)
                 : Component.translatable("friendlybeacons.radius.none");
-        int bx = getX() + PADDING, by = getY() + RADIUS_TOP, bw = width - 2 * PADDING;
+        renderButton(graphics, font, radiusTop(), label, enabled, hovered);
+    }
+
+    /** Creative beacons only: the pyramid tier to act as, or Auto for the real pyramid. */
+    private void renderTierButton(GuiGraphics graphics, Font font, boolean hovered) {
+        int selection = settings.friendlybeacons$getCreativeTier();
+        Component label = selection == CreativeBeacon.AUTO
+                ? Component.translatable("friendlybeacons.creative.tier.auto", menu.getLevels())
+                : Component.translatable("friendlybeacons.creative.tier", selection);
+        renderButton(graphics, font, tierTop(), label, true, hovered);
+    }
+
+    private void renderButton(GuiGraphics graphics, Font font, int top, Component label, boolean enabled, boolean hovered) {
+        int bx = getX() + PADDING, by = getY() + top, bw = width - 2 * PADDING;
         ResourceLocation sprite = !enabled ? BUTTON_DISABLED : hovered ? BUTTON_HIGHLIGHTED : BUTTON;
         graphics.blitSprite(sprite, bx, by, bw, BUTTON_HEIGHT);
         graphics.drawCenteredString(font, label, bx + bw / 2, by + (BUTTON_HEIGHT - 8) / 2, enabled ? 0xFFFFFF : 0xA0A0A0);
@@ -229,6 +272,12 @@ public class BeaconTargetsPanel extends AbstractWidget {
             playDownSound(minecraft.getSoundManager());
             settings.friendlybeacons$setGlowTargets(settings.friendlybeacons$getGlowTargets() ^ BeaconTargets.values()[glowRow].bit());
             minecraft.gameMode.handleInventoryButtonClick(menu.containerId, BeaconSettings.BUTTON_GLOW_TARGETS + glowRow);
+            return true;
+        }
+
+        if (isOverTierButton(mouseX, mouseY)) {
+            playDownSound(minecraft.getSoundManager());
+            minecraft.gameMode.handleInventoryButtonClick(menu.containerId, CreativeBeacon.BUTTON_TIER);
             return true;
         }
 

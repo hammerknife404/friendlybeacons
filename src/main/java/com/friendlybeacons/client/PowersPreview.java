@@ -89,7 +89,8 @@ class PowersPreview {
                 : "friendlybeacons.powers.disabled";
         message = rows.isEmpty() ? font.split(Component.translatable(messageKey), width) : List.of();
         footer = pending.equals(applied) ? List.of()
-                : font.split(Component.translatable("friendlybeacons.powers.pending").withStyle(ChatFormatting.ITALIC), width);
+                : font.split(Component.translatable(settings.friendlybeacons$isCreative()
+                        ? "friendlybeacons.creative.pending" : "friendlybeacons.powers.pending").withStyle(ChatFormatting.ITALIC), width);
         return TITLE_HEIGHT + rows.size() * ROW_HEIGHT + (message.size() + footer.size()) * font.lineHeight;
     }
 

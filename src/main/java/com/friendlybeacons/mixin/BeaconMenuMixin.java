@@ -3,10 +3,14 @@ package com.friendlybeacons.mixin;
 import com.friendlybeacons.BeaconSettings;
 import com.friendlybeacons.BeaconTargets;
 import com.friendlybeacons.BeaconTargetsHolder;
+import com.friendlybeacons.CreativeBeacon;
 import com.friendlybeacons.FriendlyBeacons;
 import com.friendlybeacons.FriendlyBeaconsConfig;
 import com.friendlybeacons.SyncedBeaconSlot;
+import java.util.Optional;
+import net.minecraft.core.Holder;
 import net.minecraft.world.Container;
+import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.BeaconMenu;
@@ -14,6 +18,8 @@ import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.DataSlot;
 import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BeaconBlockEntity;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -21,6 +27,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
@@ -33,6 +40,9 @@ public abstract class BeaconMenuMixin extends AbstractContainerMenu implements B
     @Shadow
     @Final
     private ContainerLevelAccess access;
+    @Shadow
+    @Final
+    private ContainerData beaconData;
 
     @Unique
     private DataSlot friendlybeacons$targets;
@@ -44,6 +54,8 @@ public abstract class BeaconMenuMixin extends AbstractContainerMenu implements B
     private DataSlot friendlybeacons$glow; // Glowing targets mask
     @Unique
     private DataSlot friendlybeacons$disabledEffects;
+    @Unique
+    private DataSlot friendlybeacons$creativeTier;
 
     protected BeaconMenuMixin(MenuType<?> type, int containerId) {
         super(type, containerId);
@@ -65,6 +77,32 @@ public abstract class BeaconMenuMixin extends AbstractContainerMenu implements B
         // Server-wide, but synced per menu so /friendlybeacons effect changes reach open screens.
         friendlybeacons$disabledEffects = addDataSlot(new SyncedBeaconSlot(access,
                 beacon -> FriendlyBeaconsConfig.disabledEffects(), 0));
+        friendlybeacons$creativeTier = addDataSlot(new SyncedBeaconSlot(access,
+                beacon -> CreativeBeacon.is(beacon) ? CreativeBeacon.selection(beacon.getData(FriendlyBeacons.BEACON_CREATIVE_TIER))
+                        : CreativeBeacon.NOT_CREATIVE, CreativeBeacon.NOT_CREATIVE));
+    }
+
+    @Unique
+    private boolean friendlybeacons$isCreativeServer() {
+        return access.evaluate(CreativeBeacon::is, false);
+    }
+
+    /** Vanilla only accepts the vanilla beacon block here; keep creative beacon menus open too. */
+    @ModifyArg(method = "stillValid", at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/world/inventory/BeaconMenu;stillValid(Lnet/minecraft/world/inventory/ContainerLevelAccess;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/level/block/Block;)Z"),
+            index = 2)
+    private Block friendlybeacons$creativeStillValid(Block block) {
+        return friendlybeacons$isCreativeServer() ? FriendlyBeacons.CREATIVE_BEACON.get() : block;
+    }
+
+    /** Creative beacons change powers for free. With a payment item in the slot, vanilla consumes it as usual. */
+    @Inject(method = "updateEffects", at = @At("HEAD"), cancellable = true)
+    private void friendlybeacons$freeEffects(Optional<Holder<MobEffect>> primary, Optional<Holder<MobEffect>> secondary, CallbackInfo ci) {
+        if (((BeaconMenu) (Object) this).hasPayment() || !friendlybeacons$isCreativeServer()) return;
+        beaconData.set(1, BeaconMenu.encodeEffect(primary.orElse(null)));
+        beaconData.set(2, BeaconMenu.encodeEffect(secondary.orElse(null)));
+        access.execute(Level::blockEntityChanged);
+        ci.cancel();
     }
 
     @Override
@@ -83,7 +121,15 @@ public abstract class BeaconMenuMixin extends AbstractContainerMenu implements B
                 // Free and instant like the target checkboxes, so it can be flipped on for a raid.
                 int bit = BeaconTargets.values()[id - BeaconSettings.BUTTON_GLOW_TARGETS].bit();
                 beacon.setData(FriendlyBeacons.BEACON_GLOW_TARGETS, FriendlyBeacons.glowTargets(beacon) ^ bit);
-            } else if (BeaconSettings.isValidBonus(id - BeaconSettings.BUTTON_SET_BONUS) && levels >= 5 && self.hasPayment()) {
+            } else if (id == CreativeBeacon.BUTTON_TIER && CreativeBeacon.is(beacon) && player.isCreative()) {
+                beacon.setData(FriendlyBeacons.BEACON_CREATIVE_TIER, CreativeBeacon.next(beacon.getData(FriendlyBeacons.BEACON_CREATIVE_TIER)));
+                // Apply now rather than at the next 80-tick check; Auto falls back to the pyramid at that check.
+                int selection = CreativeBeacon.selection(beacon.getData(FriendlyBeacons.BEACON_CREATIVE_TIER));
+                if (selection != CreativeBeacon.AUTO) ((BeaconBlockEntityAccessor) beacon).friendlybeacons$setLevels(selection);
+                // The client beacon needs the selection for the beam.
+                level.sendBlockUpdated(pos, beacon.getBlockState(), beacon.getBlockState(), Block.UPDATE_CLIENTS);
+            } else if (BeaconSettings.isValidBonus(id - BeaconSettings.BUTTON_SET_BONUS) && levels >= 5
+                    && (self.hasPayment() || CreativeBeacon.is(beacon))) {
                 // Like vanilla powers this needs a payment item; the Done packet that follows consumes it.
                 beacon.setData(FriendlyBeacons.BEACON_BONUS, id - BeaconSettings.BUTTON_SET_BONUS);
             } else {
@@ -127,5 +173,10 @@ public abstract class BeaconMenuMixin extends AbstractContainerMenu implements B
     @Override
     public int friendlybeacons$getDisabledEffects() {
         return friendlybeacons$disabledEffects.get();
+    }
+
+    @Override
+    public int friendlybeacons$getCreativeTier() {
+        return friendlybeacons$creativeTier.get();
     }
 }

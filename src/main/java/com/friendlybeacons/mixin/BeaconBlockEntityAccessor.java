@@ -8,4 +8,7 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 public interface BeaconBlockEntityAccessor {
     @Accessor("levels")
     int friendlybeacons$getLevels();
+
+    @Accessor("levels")
+    void friendlybeacons$setLevels(int levels);
 }

@@ -38,5 +38,12 @@
   "friendlybeacons.configuration.enableTier5.tooltip": "Allow a 5th pyramid layer (11x11) that unlocks the tier 5 radius, bonus and Glowing.",
   "friendlybeacons.configuration.effects": "Beacon Effects",
   "friendlybeacons.configuration.effects.tooltip": "Turn each beacon effect on or off for every beacon.",
-  "friendlybeacons.configuration.effects.button": "Toggle Effects..."
+  "friendlybeacons.configuration.effects.button": "Toggle Effects...",
+  "block.friendlybeacons.creative_beacon": "Creative Beacon",
+  "friendlybeacons.creative.tooltip": "Creative only. Pick any tier without a pyramid and change powers without a payment item.",
+  "friendlybeacons.creative.locked": "Only players in creative mode can use a Creative Beacon.",
+  "friendlybeacons.creative.tier": "Tier: %s",
+  "friendlybeacons.creative.tier.auto": "Tier: Auto (%s)",
+  "friendlybeacons.creative.tier.desc": "Creative Beacon: click to cycle the tier it acts as, whatever is under it. Auto uses the real pyramid.",
+  "friendlybeacons.creative.pending": "Not applied yet: press Done. No payment item needed."
 }

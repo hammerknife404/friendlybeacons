@@ -20,4 +20,11 @@ public interface BeaconTargetsHolder {
 
     /** Effects disabled server-wide, as a mask of {@link BeaconSettings#effectBit} bits. */
     int friendlybeacons$getDisabledEffects();
+
+    /** Creative beacon tier selection ({@link CreativeBeacon#AUTO} or 1-5), or {@link CreativeBeacon#NOT_CREATIVE}. */
+    int friendlybeacons$getCreativeTier();
+
+    default boolean friendlybeacons$isCreative() {
+        return friendlybeacons$getCreativeTier() != CreativeBeacon.NOT_CREATIVE;
+    }
 }
