@@ -44,6 +44,15 @@ Glowing is separate from the Affects checkboxes on the left. For example, you ca
 
 Beacons from 1.3.0 keep glowing what they did before: their Affects categories if their old Glowing checkbox was on, nothing if it was off.
 
+## Creative Beacon
+
+A creative-only beacon for testing, in the Functional Blocks tab next to the vanilla beacon. Its base is crying obsidian.
+
+- A **Tier** button at the top of the panel's buttons picks the tier it acts as: 1 to 5 (1 to 4 with `enableTier5 = false`), or **Auto** for the real pyramid under it. It works with no pyramid at all, and gives effects even with the sky blocked. New ones start at the top tier.
+- Done works without a payment item, including for the tier 5 bonus. Put a payment item in and it's used up as on a normal beacon.
+- Everything else (Affects, Glowing, Radius, effect toggles) works like a normal beacon.
+- Only players in creative mode can open it. It can't be broken outside creative and drops nothing.
+
 ## Configuration
 
 `config/friendlybeacons-server.toml` in the server (or game) folder, created on first launch. A copy in the world's `serverconfig/` folder overrides it for that world.

@@ -2,8 +2,13 @@ package com.friendlybeacons.mixin;
 
 import com.friendlybeacons.BeaconSettings;
 import com.friendlybeacons.BeaconTargets;
+import com.friendlybeacons.CreativeBeacon;
 import com.friendlybeacons.FriendlyBeacons;
 import com.friendlybeacons.FriendlyBeaconsConfig;
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.llamalad7.mixinextras.sugar.Local;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -19,6 +24,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
+import org.spongepowered.asm.mixin.injection.Slice;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(BeaconBlockEntity.class)
@@ -27,6 +33,25 @@ public abstract class BeaconBlockEntityMixin {
     @ModifyConstant(method = "updateBase", constant = @Constant(intValue = 4))
     private static int friendlybeacons$maxPyramidLayers(int layers) {
         return FriendlyBeaconsConfig.tier5Enabled() ? 5 : layers;
+    }
+
+    /** Creative beacons with a fixed tier skip the pyramid check and use that tier. Runs on both sides, so the beam shows too. */
+    @WrapOperation(method = "tick", at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/world/level/block/entity/BeaconBlockEntity;updateBase(Lnet/minecraft/world/level/Level;III)I"))
+    private static int friendlybeacons$creativeTier(Level level, int x, int y, int z, Operation<Integer> original,
+            @Local(argsOnly = true) BeaconBlockEntity beacon) {
+        return CreativeBeacon.levels(beacon, () -> original.call(level, x, y, z));
+    }
+
+    /**
+     * The two beamSections.isEmpty() checks in the 80-tick block: creative beacons update their tier
+     * and give effects even when the sky is blocked.
+     */
+    @ModifyExpressionValue(method = "tick",
+            at = @At(value = "INVOKE", target = "Ljava/util/List;isEmpty()Z"),
+            slice = @Slice(from = @At(value = "CONSTANT", args = "longValue=80")))
+    private static boolean friendlybeacons$creativeIgnoresSky(boolean empty, @Local(argsOnly = true) BeaconBlockEntity beacon) {
+        return empty && !CreativeBeacon.is(beacon);
     }
 
     /**

@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/beacon",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "obsidian": "minecraft:block/crying_obsidian"
+  }
+}
